@@ -1,4 +1,4 @@
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, type CifraListResponse, type PlaylistListResponse } from '../lib/api';
 import { CifraCard } from '../components/CifraCard';
@@ -19,12 +19,31 @@ export function HomePage() {
   const [playlists, setPlaylists] = useState<PlaylistListResponse | null>(null);
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const pushedQ = useRef(initialQ);
+  const searching = q.trim() !== '';
+
+  useEffect(() => {
+    const trimmed = q.trim();
+    if (trimmed === pushedQ.current) return;
+    const timer = window.setTimeout(() => {
+      pushedQ.current = trimmed;
+      const next = new URLSearchParams(params);
+      if (trimmed) next.set('q', trimmed);
+      else next.delete('q');
+      next.delete('page');
+      setParams(next, { replace: true });
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [q, params, setParams]);
 
   useEffect(() => {
     const query = params.get('q') ?? '';
     const page = Number(params.get('page') ?? '1');
     const sortParam = params.get('sort') === 'recent' ? 'recent' : 'popular';
-    setQ(query);
+    if (query !== pushedQ.current) {
+      pushedQ.current = query;
+      setQ(query);
+    }
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -68,6 +87,7 @@ export function HomePage() {
   function onSearch(e: FormEvent) {
     e.preventDefault();
     const next = new URLSearchParams();
+    pushedQ.current = q.trim();
     if (q.trim()) next.set('q', q.trim());
     if (sort === 'recent') next.set('sort', 'recent');
     setParams(next);
@@ -83,7 +103,7 @@ export function HomePage() {
 
   return (
     <div className="page home-page">
-      <section className="portal-hero">
+      <section className={`portal-hero${searching ? ' portal-hero--compact' : ''}`}>
         <div
           className="portal-hero-media"
           style={{ backgroundImage: `url(${HERO_IMAGE})` }}
@@ -115,6 +135,7 @@ export function HomePage() {
         </div>
       </section>
 
+      {!searching ? (
       <section className="portal-shortcuts" aria-label="Atalhos">
         <Link to="/playlists" className="portal-shortcut">
           <span className="portal-shortcut-icon" aria-hidden>
@@ -138,6 +159,7 @@ export function HomePage() {
           <span>Músicas recém-publicadas</span>
         </button>
       </section>
+      ) : null}
 
       <section className="section portal-section" id="destaques">
         <div className="portal-section-title">
@@ -152,6 +174,7 @@ export function HomePage() {
           <span />
         </div>
 
+        {!searching ? (
         <div className="portal-sort-tabs">
           <button
             type="button"
@@ -168,6 +191,7 @@ export function HomePage() {
             Recentes
           </button>
         </div>
+        ) : null}
 
         {loading ? <p className="muted">Carregando…</p> : null}
         {error ? <p className="error-text">{error}</p> : null}
@@ -220,6 +244,7 @@ export function HomePage() {
         ) : null}
       </section>
 
+      {!searching ? (
       <section className="portal-split section">
         <div className="portal-split-col">
           <div className="portal-section-title compact">
@@ -296,6 +321,7 @@ export function HomePage() {
           </ul>
         </div>
       </section>
+      ) : null}
     </div>
   );
 }
