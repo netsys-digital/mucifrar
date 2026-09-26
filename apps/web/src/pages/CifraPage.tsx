@@ -33,31 +33,61 @@ import {
   transposeKey,
 } from '../lib/transpose';
 
+type CifraPart = ReturnType<typeof splitCifraLine>[number];
+
+function renderCifraParts(parts: CifraPart[], keyPrefix: string) {
+  return parts.map((part, partIdx) => {
+    const key = `${keyPrefix}${partIdx}`;
+    if (part.type === 'chord') {
+      return (
+        <span key={key} className="cifra-chord">
+          {part.value}
+        </span>
+      );
+    }
+    if (part.type === 'section') {
+      return (
+        <span key={key} className="cifra-section">
+          {part.value}
+        </span>
+      );
+    }
+    return <Fragment key={key}>{part.value}</Fragment>;
+  });
+}
+
 function renderBlockLines(block: string[], highlights?: boolean[]) {
-  return block.map((line, lineIdx) => (
-    <Fragment key={lineIdx}>
-      {lineIdx > 0 ? '\n' : null}
-      <span className={highlights?.[lineIdx] ? 'cifra-line cifra-line--intro-echo' : 'cifra-line'}>
-        {splitCifraLine(line).map((part, partIdx) => {
-          if (part.type === 'chord') {
-            return (
-              <span key={partIdx} className="cifra-chord">
-                {part.value}
+  return block.map((line, lineIdx) => {
+    const parts = splitCifraLine(line);
+    const first = parts.findIndex((p) => p.type === 'chord');
+    let last = -1;
+    for (let i = parts.length - 1; i >= 0; i -= 1) {
+      if (parts[i]!.type === 'chord') {
+        last = i;
+        break;
+      }
+    }
+    const marked = Boolean(highlights?.[lineIdx]) && first >= 0;
+
+    return (
+      <Fragment key={lineIdx}>
+        {lineIdx > 0 ? '\n' : null}
+        <span className="cifra-line">
+          {marked ? (
+            <>
+              {renderCifraParts(parts.slice(0, first), 'a')}
+              <span className="cifra-intro-echo">
+                {renderCifraParts(parts.slice(first, last + 1), 'b')}
               </span>
-            );
-          }
-          if (part.type === 'section') {
-            return (
-              <span key={partIdx} className="cifra-section">
-                {part.value}
-              </span>
-            );
-          }
-          return <Fragment key={partIdx}>{part.value}</Fragment>;
-        })}
-      </span>
-    </Fragment>
-  ));
+              {renderCifraParts(parts.slice(last + 1), 'c')}
+            </>
+          ) : (
+            renderCifraParts(parts, 'p')
+          )}
+        </span>
+      </Fragment>
+    );
+  });
 }
 
 function CifraSheetBody({ content, columns }: { content: string; columns: number }) {
@@ -123,6 +153,7 @@ export function CifraPage() {
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [versionLoaded, setVersionLoaded] = useState(false);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -191,6 +222,7 @@ export function CifraPage() {
 
   useEffect(() => {
     setMobileToolsOpen(false);
+    setMobilePanelOpen(false);
   }, [slug]);
 
   useEffect(() => {
@@ -309,14 +341,21 @@ export function CifraPage() {
     const sheet = sheetRef.current;
     if (!sheet) return;
 
+    const target: HTMLElement =
+      sheet.scrollHeight > sheet.clientHeight + 2
+        ? sheet
+        : ((document.scrollingElement as HTMLElement | null) ?? document.documentElement);
+
+    // scrollTop é arredondado pelo navegador; frações por frame precisam ser acumuladas.
+    let pos = target.scrollTop;
     let last = performance.now();
     const tick = (now: number) => {
-      const dt = (now - last) / 1000;
+      const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
-      const el = sheetRef.current;
-      if (!el) return;
-      el.scrollTop += scrollSpeed * dt;
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 2) {
+      if (Math.abs(target.scrollTop - pos) > 2) pos = target.scrollTop;
+      pos += scrollSpeed * dt;
+      target.scrollTop = pos;
+      if (target.scrollTop + target.clientHeight >= target.scrollHeight - 2) {
         setScrolling(false);
         return;
       }
@@ -540,7 +579,7 @@ export function CifraPage() {
   const fontSize = `${(0.98 * fontScale).toFixed(3)}rem`;
 
   return (
-    <article className="page cifra-view">
+    <article className={`page cifra-view${mobilePanelOpen ? ' cifra-view--panel-open' : ''}`}>
       {!fullscreen ? (
         <header className="cifra-view-head">
           <div>
@@ -602,6 +641,45 @@ export function CifraPage() {
             </div>
           </nav>
         ) : null}
+
+        <div className="cifra-mobile-bar print-hide">
+          <button
+            type="button"
+            className={`btn btn-ghost btn-compact btn-icon${mobilePanelOpen ? ' is-active' : ''}`}
+            aria-expanded={mobilePanelOpen}
+            aria-label={mobilePanelOpen ? 'Ocultar ajustes' : 'Mostrar ajustes'}
+            title="Ajustes"
+            onClick={() => setMobilePanelOpen((v) => !v)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              <circle cx="15" cy="6" r="2.2" fill="var(--paper, #fff)" stroke="currentColor" strokeWidth="2" />
+              <circle cx="9" cy="12" r="2.2" fill="var(--paper, #fff)" stroke="currentColor" strokeWidth="2" />
+              <circle cx="17" cy="18" r="2.2" fill="var(--paper, #fff)" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          </button>
+          <span className="cifra-mobile-bar-key">
+            Tom <strong>{displayKey}</strong>
+          </span>
+          <button
+            type="button"
+            className={`btn btn-ghost btn-compact btn-icon${scrolling ? ' is-active' : ''}`}
+            aria-label={scrolling ? 'Pausar scroll' : 'Iniciar scroll'}
+            title={scrolling ? 'Pausar scroll' : 'Iniciar scroll'}
+            onClick={() => setScrolling((v) => !v)}
+          >
+            {scrolling ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            )}
+          </button>
+        </div>
 
         <div
           className={`cifra-toolbar print-hide${mobileToolsOpen ? ' cifra-toolbar--more-open' : ''}`}
@@ -712,19 +790,28 @@ export function CifraPage() {
               >
                 {scrolling ? 'Pausar' : 'Scroll'}
               </button>
-              <label className="cifra-speed">
-                <span className="cifra-toolbar-label">Vel.</span>
-                <input
-                  type="range"
-                  min={1}
-                  max={60}
-                  step={1}
-                  value={scrollSpeed}
-                  onChange={(e) => setScrollSpeed(clampSpeed(Number(e.target.value)))}
-                  title={`Velocidade ${scrollSpeed}`}
-                />
-                <span className="cifra-speed-value">{scrollSpeed}</span>
-              </label>
+              <span className="cifra-toolbar-label">Vel.</span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                aria-label="Diminuir velocidade do scroll"
+                disabled={scrollSpeed <= 1}
+                onClick={() => setScrollSpeed((s) => clampSpeed(s - 1))}
+              >
+                −
+              </button>
+              <span className="cifra-key-pill" title="Velocidade do scroll">
+                {scrollSpeed}
+              </span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                aria-label="Aumentar velocidade do scroll"
+                disabled={scrollSpeed >= 60}
+                onClick={() => setScrollSpeed((s) => clampSpeed(s + 1))}
+              >
+                +
+              </button>
             </div>
 
             <button

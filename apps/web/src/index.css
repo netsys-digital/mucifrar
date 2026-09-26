@@ -909,6 +909,10 @@ button.portal-shortcut {
   display: none;
 }
 
+.cifra-mobile-bar {
+  display: none;
+}
+
 .cifra-toolbar-scroll {
   gap: 0.45rem;
 }
@@ -1091,25 +1095,17 @@ button.portal-shortcut {
   display: inline;
 }
 
-.cifra-line--intro-echo {
-  background: linear-gradient(
-    transparent 55%,
-    rgba(166, 139, 79, 0.38) 55%,
-    rgba(166, 139, 79, 0.38) 92%,
-    transparent 92%
-  );
+.cifra-intro-echo {
+  background: rgba(166, 139, 79, 0.38);
+  box-shadow: 0 0 0 2px rgba(166, 139, 79, 0.38);
+  border-radius: 2px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
-  border-radius: 2px;
 }
 
-.cifra-stage--dark .cifra-line--intro-echo {
-  background: linear-gradient(
-    transparent 55%,
-    rgba(166, 139, 79, 0.45) 55%,
-    rgba(166, 139, 79, 0.45) 92%,
-    transparent 92%
-  );
+.cifra-stage--dark .cifra-intro-echo {
+  background: rgba(166, 139, 79, 0.45);
+  box-shadow: 0 0 0 2px rgba(166, 139, 79, 0.45);
 }
 
 .cifra-section {
@@ -1803,6 +1799,49 @@ html.cifra-fs-active body {
 
   .cifra-stage--dark .cifra-toolbar-more {
     border-top-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .cifra-mobile-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.3rem 0.45rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0.35rem;
+    z-index: 6;
+  }
+
+  .cifra-mobile-bar-key {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .cifra-stage--dark .cifra-mobile-bar {
+    background: rgba(28, 37, 51, 0.92);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .cifra-stage--dark .cifra-mobile-bar-key {
+    color: var(--sheet-ink);
+  }
+
+  .cifra-view:not(.cifra-view--panel-open) .cifra-toolbar,
+  .cifra-view:not(.cifra-view--panel-open) .cifra-view-head .muted,
+  .cifra-view:not(.cifra-view--panel-open) .cifra-view-actions {
+    display: none;
+  }
+
+  .cifra-view--panel-open .cifra-toolbar {
+    top: 3.4rem;
+  }
+
+  .cifra-view-head {
+    margin-bottom: 0.6rem;
   }
 }
 
