@@ -534,37 +534,6 @@ export function CifraPage() {
 
   return (
     <article className="page cifra-view">
-      {!fullscreen && playlistNav ? (
-        <nav className="playlist-cifra-nav print-hide" aria-label="Navegação da playlist">
-          <Link to={playlistNav.playlistHref} className="playlist-cifra-nav-back">
-            ← {playlistNav.title}
-          </Link>
-          <div className="playlist-cifra-nav-controls">
-            {playlistNav.prevHref ? (
-              <Link to={playlistNav.prevHref} className="btn btn-ghost btn-compact">
-                ← Anterior
-              </Link>
-            ) : (
-              <span className="btn btn-ghost btn-compact" aria-disabled="true">
-                ← Anterior
-              </span>
-            )}
-            <span className="playlist-cifra-nav-pos">
-              {playlistNav.index + 1} / {playlistNav.total}
-            </span>
-            {playlistNav.nextHref ? (
-              <Link to={playlistNav.nextHref} className="btn btn-ghost btn-compact">
-                Próxima →
-              </Link>
-            ) : (
-              <span className="btn btn-ghost btn-compact" aria-disabled="true">
-                Próxima →
-              </span>
-            )}
-          </div>
-        </nav>
-      ) : null}
-
       {!fullscreen ? (
         <header className="cifra-view-head">
           <div>
@@ -596,6 +565,37 @@ export function CifraPage() {
       </div>
 
       <div ref={stageRef} className={stageClass}>
+        {playlistNav ? (
+          <nav className="playlist-cifra-nav print-hide" aria-label="Navegação da playlist">
+            <Link to={playlistNav.playlistHref} className="playlist-cifra-nav-back">
+              ← {playlistNav.title}
+            </Link>
+            <div className="playlist-cifra-nav-controls">
+              {playlistNav.prevHref ? (
+                <Link to={playlistNav.prevHref} className="btn btn-ghost btn-compact">
+                  ← Anterior
+                </Link>
+              ) : (
+                <span className="btn btn-ghost btn-compact" aria-disabled="true">
+                  ← Anterior
+                </span>
+              )}
+              <span className="playlist-cifra-nav-pos">
+                {playlistNav.index + 1} / {playlistNav.total}
+              </span>
+              {playlistNav.nextHref ? (
+                <Link to={playlistNav.nextHref} className="btn btn-ghost btn-compact">
+                  Próxima →
+                </Link>
+              ) : (
+                <span className="btn btn-ghost btn-compact" aria-disabled="true">
+                  Próxima →
+                </span>
+              )}
+            </div>
+          </nav>
+        ) : null}
+
         <div
           className={`cifra-toolbar print-hide${mobileToolsOpen ? ' cifra-toolbar--more-open' : ''}`}
           role="toolbar"
