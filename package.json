@@ -1,0 +1,23 @@
+{
+  "name": "mucifrar",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chord Seven — sistema de gestão e consulta de cifras",
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "npm run dev -w @mucifrar/api",
+    "dev:web": "npm run dev -w @mucifrar/web",
+    "build": "npm run build -w @mucifrar/api && npm run build -w @mucifrar/web",
+    "lint": "npm run lint -w @mucifrar/api && npm run lint -w @mucifrar/web",
+    "test": "npm run test -w @mucifrar/api",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "db:generate": "npm run db:generate -w @mucifrar/api",
+    "db:push": "npm run db:push -w @mucifrar/api",
+    "db:seed": "npm run db:seed -w @mucifrar/api",
+    "db:studio": "npm run db:studio -w @mucifrar/api"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mucifrar-postgres
+    restart: unless-stopped
+    ports:
+      - '${POSTGRES_PORT:-5436}:5432'
+    environment:
+      POSTGRES_DB: mucifrar
+      POSTGRES_USER: mucifrar
+      POSTGRES_PASSWORD: ${MUCIFRAR_DB_PASSWORD:-mucifrar_secret}
+    volumes:
+      - mucifrar_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mucifrar -d mucifrar']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+volumes:
+  mucifrar_postgres_data:
