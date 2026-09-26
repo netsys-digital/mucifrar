@@ -215,19 +215,29 @@ class CifraClubUpstreamError extends Error {
 }
 
 function toFetchAppError(err: unknown): AppError {
+  // Evitar 502/504: Cloudflare/nginx substituem o corpo e a UI vira "Erro na requisição".
   if (err instanceof CifraClubUpstreamError) {
     if (err.upstreamStatus === 403 || err.upstreamStatus === 429) {
       return new AppError(
-        502,
+        422,
         'O Cifra Club bloqueou o acesso a partir deste servidor. Cole a cifra manualmente no formulário abaixo.',
       );
     }
-    return new AppError(502, err.message);
+    return new AppError(
+      422,
+      err.message || 'Não foi possível acessar o Cifra Club. Cole a cifra manualmente.',
+    );
   }
   if (err instanceof Error && err.name === 'AbortError') {
-    return new AppError(504, 'Tempo esgotado ao buscar a cifra no Cifra Club');
+    return new AppError(
+      422,
+      'Tempo esgotado ao buscar a cifra no Cifra Club. Cole o texto manualmente ou tente de novo.',
+    );
   }
-  return new AppError(502, 'Não foi possível acessar o Cifra Club');
+  return new AppError(
+    422,
+    'Não foi possível acessar o Cifra Club. Cole a cifra manualmente no formulário abaixo.',
+  );
 }
 
 function isRetryableFetchError(err: unknown): boolean {
@@ -356,7 +366,7 @@ export async function importFromCifraClub(rawUrl: string): Promise<CifraClubImpo
   if (!lastHtml && fetchErrors.length > 0) {
     const blocked = fetchErrors.some((m) => /status 403|status 429|bloqueou/i.test(m));
     throw new AppError(
-      502,
+      422,
       blocked
         ? 'O Cifra Club bloqueou o acesso a partir deste servidor. Cole a cifra manualmente no formulário abaixo.'
         : 'Não foi possível acessar o Cifra Club agora. Tente novamente ou cole a cifra manualmente.',

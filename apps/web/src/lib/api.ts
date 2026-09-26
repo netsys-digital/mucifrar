@@ -100,7 +100,12 @@ export async function api<T>(path: string, options: RequestInit = {}, retry = tr
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new ApiError(res.status, (data as { error?: string }).error ?? 'Erro na requisição', data);
+    const msg =
+      (data as { error?: string }).error ||
+      (res.status === 502 || res.status === 504
+        ? 'Serviço indisponível ou bloqueado. Tente de novo ou cole a cifra manualmente.'
+        : 'Erro na requisição');
+    throw new ApiError(res.status, msg, data);
   }
 
   return data as T;
