@@ -2,7 +2,6 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, type Cifra } from '../lib/api';
 import { consumePendingImport, clearPendingImport } from '../lib/importPayload';
-import { PwaInstallButton } from '../components/PwaInstallButton';
 
 const EMPTY = {
   title: '',
@@ -101,21 +100,33 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
       </div>
 
       {mode === 'create' ? (
-        <div className="cifra-import">
-          <div>
-            <h2>Importador de cifra</h2>
+        <div className="enviar-import-grid">
+          <div className="cifra-import enviar-import-card">
+            <h2>Já tenho o Importador</h2>
             <p className="muted">
-              Baixe o atalho PWA ou use o bookmarklet no Cifra Club — a importação acontece no seu
-              dispositivo.
+              Abra a música no Cifra Club, use o favorito <strong>Importar p/ Chord Seven</strong> e
+              volte aqui com a cifra preenchida.
             </p>
+            <a
+              className="btn btn-gold"
+              href="https://www.cifraclub.com.br/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Abrir Cifra Club
+            </a>
+            {importNote ? <p className="ok-text">{importNote}</p> : null}
           </div>
-          <div className="cifra-import-row cifra-import-actions">
-            <PwaInstallButton className="btn btn-gold" />
+
+          <div className="cifra-import enviar-import-card enviar-import-card--side">
+            <h2>Ainda não configurei</h2>
+            <p className="muted">
+              É preciso criar um favorito especial uma vez. Veja o passo a passo simples.
+            </p>
             <Link to="/importador" className="btn btn-ghost">
-              Como usar
+              Ver instruções
             </Link>
           </div>
-          {importNote ? <p className="ok-text">{importNote}</p> : null}
         </div>
       ) : null}
 
