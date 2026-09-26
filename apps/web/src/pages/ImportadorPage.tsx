@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type DragEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { PwaInstallButton } from '../components/PwaInstallButton';
 import { buildBookmarkletHref } from '../lib/importPayload';
@@ -29,6 +29,17 @@ export function ImportadorPage() {
     }
   }
 
+  /** React bloqueia href="javascript:…"; no drag enviamos a URL real. */
+  function onBookmarkDragStart(e: DragEvent<HTMLButtonElement>) {
+    e.dataTransfer.setData('text/uri-list', bookmarklet);
+    e.dataTransfer.setData('text/plain', bookmarklet);
+    e.dataTransfer.setData(
+      'text/html',
+      `<a href="${bookmarklet.replace(/"/g, '&quot;')}">Importar p/ Chord Seven</a>`,
+    );
+    e.dataTransfer.effectAllowed = 'copyLink';
+  }
+
   return (
     <div className="page importador-page">
       <div className="section-head">
@@ -54,26 +65,33 @@ export function ImportadorPage() {
         <h2>2. Bookmarklet (Cifra Club → Chord Seven)</h2>
         <ol className="importador-steps">
           <li>
-            Arraste o botão abaixo para a barra de favoritos (ou copie o link e salve como favorito).
+            Clique em <strong>Copiar bookmarklet</strong> (recomendado) ou arraste o botão azul para a
+            barra de favoritos.
           </li>
-          <li>Abra a cifra no Cifra Club (página da música ou “imprimir”).</li>
-          <li>Toque no favorito — a cifra abre em Enviar para você revisar e salvar.</li>
+          <li>
+            Se for copiar: Favoritos → Adicionar favorito → no campo URL cole o código (começa com{' '}
+            <code>javascript:</code>).
+          </li>
+          <li>Abra a cifra no Cifra Club e clique no favorito.</li>
         </ol>
 
         <div className="importador-actions">
-          <a
+          <button
+            type="button"
             className="btn btn-primary bookmarklet-link"
-            href={bookmarklet}
-            onClick={(e) => e.preventDefault()}
+            draggable
+            onDragStart={onBookmarkDragStart}
+            title="Arraste para a barra de favoritos"
           >
             Importar p/ Chord Seven
-          </a>
+          </button>
           <button type="button" className="btn btn-ghost" onClick={() => void copyBookmarklet()}>
             {copied ? 'Copiado!' : 'Copiar bookmarklet'}
           </button>
         </div>
         <p className="muted small-print">
-          No celular: favoritos → editar → colar o código copiado no campo URL do favorito.
+          Se o favorito antigo mostrar erro do React, apague-o e crie de novo com{' '}
+          <strong>Copiar bookmarklet</strong>. No celular: edite o favorito e cole no campo URL.
         </p>
       </section>
 
