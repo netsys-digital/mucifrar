@@ -1,3 +1,6 @@
+# Postgres local (apenas `npm run docker:up` / desenvolvimento).
+# Em produção use docker-compose.prod.yml + rede netsys (sem Postgres neste arquivo).
+
 services:
   postgres:
     image: postgres:16-alpine
