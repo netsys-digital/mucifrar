@@ -1,6 +1,8 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, type Cifra } from '../lib/api';
+import { consumePendingImport, clearPendingImport } from '../lib/importPayload';
+import { PwaInstallButton } from '../components/PwaInstallButton';
 
 const EMPTY = {
   title: '',
@@ -10,24 +12,29 @@ const EMPTY = {
   status: 'DRAFT' as 'DRAFT' | 'PUBLISHED',
 };
 
-type CifraClubImport = {
-  title: string;
-  artist: string;
-  key: string;
-  content: string;
-  sourceUrl: string;
-};
-
 export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const { id = '' } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState(EMPTY);
+  const [form, setForm] = useState(() => {
+    if (mode !== 'create') return EMPTY;
+    const pending = consumePendingImport();
+    if (!pending) return EMPTY;
+    return {
+      ...EMPTY,
+      title: pending.title,
+      artist: pending.artist,
+      key: pending.key,
+      content: pending.content,
+    };
+  });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(mode === 'edit');
-  const [importUrl, setImportUrl] = useState('');
-  const [importing, setImporting] = useState(false);
-  const [importNote, setImportNote] = useState<string | null>(null);
+  const [importNote] = useState<string | null>(() =>
+    mode === 'create' && Boolean(consumePendingImport()?.content)
+      ? 'Cifra trazida pelo Importador. Revise e salve quando estiver ok.'
+      : null,
+  );
 
   useEffect(() => {
     if (mode !== 'edit') return;
@@ -54,31 +61,6 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
     };
   }, [mode, id]);
 
-  async function onImport(e: FormEvent) {
-    e.preventDefault();
-    setImporting(true);
-    setError(null);
-    setImportNote(null);
-    try {
-      const imported = await api<CifraClubImport>('/api/cifras/import/cifraclub', {
-        method: 'POST',
-        body: JSON.stringify({ url: importUrl.trim() }),
-      });
-      setForm((f) => ({
-        ...f,
-        title: imported.title,
-        artist: imported.artist,
-        key: imported.key,
-        content: imported.content,
-      }));
-      setImportNote('Cifra importada do Cifra Club. Revise e salve quando estiver ok.');
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Falha ao importar do Cifra Club');
-    } finally {
-      setImporting(false);
-    }
-  }
-
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -89,6 +71,7 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
           method: 'POST',
           body: JSON.stringify(form),
         });
+        clearPendingImport();
       } else {
         await api<Cifra>(`/api/cifras/${id}`, {
           method: 'PUT',
@@ -117,32 +100,28 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
         </Link>
       </div>
 
-      <form className="cifra-import" onSubmit={(e) => void onImport(e)}>
-        <div>
-          <h2>Importar do Cifra Club</h2>
-          <p className="muted">
-            Cole o link da cifra para preencher o formulário. Se o site bloquear o servidor, cole o
-            texto manualmente abaixo.
-          </p>
+      {mode === 'create' ? (
+        <div className="cifra-import">
+          <div>
+            <h2>Importador de cifra</h2>
+            <p className="muted">
+              Baixe o atalho PWA ou use o bookmarklet no Cifra Club — a importação acontece no seu
+              dispositivo.
+            </p>
+          </div>
+          <div className="cifra-import-row cifra-import-actions">
+            <PwaInstallButton className="btn btn-gold" />
+            <Link to="/importador" className="btn btn-ghost">
+              Como usar
+            </Link>
+          </div>
+          {importNote ? <p className="ok-text">{importNote}</p> : null}
         </div>
-        <div className="cifra-import-row">
-          <input
-            type="url"
-            inputMode="url"
-            placeholder="https://www.cifraclub.com.br/artista/musica/"
-            value={importUrl}
-            onChange={(e) => setImportUrl(e.target.value)}
-            required
-          />
-          <button type="submit" className="btn btn-ghost" disabled={importing || !importUrl.trim()}>
-            {importing ? 'Importando…' : 'Importar'}
-          </button>
-        </div>
-        {importNote ? <p className="ok-text">{importNote}</p> : null}
-        {error ? <p className="error-text">{error}</p> : null}
-      </form>
+      ) : null}
 
       <form className="cifra-form" onSubmit={(e) => void onSubmit(e)}>
+        {error ? <p className="error-text">{error}</p> : null}
+
         <div className="form-grid">
           <label>
             Título

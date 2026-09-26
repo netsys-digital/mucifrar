@@ -1443,6 +1443,12 @@ html.cifra-fs-active body {
   align-items: center;
 }
 
+.cifra-import-actions {
+  grid-template-columns: auto auto;
+  justify-content: start;
+  flex-wrap: wrap;
+}
+
 .cifra-import-row input {
   width: 100%;
   border: 1px solid var(--line);
@@ -1834,4 +1840,60 @@ html.cifra-fs-active body {
   justify-content: space-between;
   border-radius: 10px;
   text-align: left;
+}
+
+.importador-page .eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  font-weight: 600;
+}
+
+.importador-card {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1.25rem 1.35rem;
+  border-radius: var(--radius);
+  background: #fff;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.importador-card h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.importador-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.4rem;
+  color: var(--ink-soft);
+}
+
+.importador-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.bookmarklet-link {
+  cursor: grab;
+}
+
+.small-print {
+  font-size: 0.88rem;
+}
+
+.pwa-ios-hint {
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  background: var(--gold-soft);
+  border: 1px dashed rgba(166, 139, 79, 0.4);
 }

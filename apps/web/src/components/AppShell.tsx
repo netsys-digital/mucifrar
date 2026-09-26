@@ -24,6 +24,9 @@ export function AppShell() {
           <NavLink to="/playlists" className="nav-link">
             Playlists
           </NavLink>
+          <NavLink to="/importador" className="nav-link">
+            Importador
+          </NavLink>
           {isAuthenticated ? (
             <>
               <NavLink to="/minhas" className="nav-link">

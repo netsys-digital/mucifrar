@@ -1,0 +1,25 @@
+{
+  "name": "Importador de cifra — Chord Seven",
+  "short_name": "Importador cifra",
+  "description": "Importe cifras do Cifra Club no seu dispositivo e envie ao Chord Seven.",
+  "start_url": "/importador",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8f7f0",
+  "theme_color": "#162a4e",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

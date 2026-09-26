@@ -5,6 +5,8 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { CifraFormPage } from './pages/CifraFormPage';
 import { CifraPage } from './pages/CifraPage';
 import { HomePage } from './pages/HomePage';
+import { ImportadorPage } from './pages/ImportadorPage';
+import { ImportPayloadPage } from './pages/ImportPayloadPage';
 import { LoginPage } from './pages/LoginPage';
 import { MyCifrasPage } from './pages/MyCifrasPage';
 import { MyPlaylistsPage } from './pages/MyPlaylistsPage';
@@ -25,6 +27,8 @@ export function App() {
             <Route path="playlist/:slug" element={<PlaylistPage />} />
             <Route path="entrar" element={<LoginPage />} />
             <Route path="cadastrar" element={<RegisterPage />} />
+            <Route path="importador" element={<ImportadorPage />} />
+            <Route path="importar-dados" element={<ImportPayloadPage />} />
 
             <Route element={<ProtectedRoute />}>
               <Route path="minhas" element={<MyCifrasPage />} />

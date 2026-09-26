@@ -6,7 +6,13 @@ export function ProtectedRoute() {
   const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/entrar" replace state={{ from: location.pathname }} />;
+    return (
+      <Navigate
+        to="/entrar"
+        replace
+        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+      />
+    );
   }
 
   return <Outlet />;
