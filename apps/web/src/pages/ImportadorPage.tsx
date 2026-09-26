@@ -143,7 +143,7 @@ export function ImportadorPage() {
         <ol className="importador-steps">
           <li>
             Abra a cifra no{' '}
-            <a href="https://www.cifraclub.com.br/" target="_blank" rel="noreferrer">
+            <a href="https://www.cifraclub.com.br/">
               Cifra Club
             </a>{' '}
             (página da música).
@@ -157,12 +157,7 @@ export function ImportadorPage() {
           </li>
         </ol>
         <div className="importador-actions">
-          <a
-            className="btn btn-gold"
-            href="https://www.cifraclub.com.br/"
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a className="btn btn-gold" href="https://www.cifraclub.com.br/">
             Abrir Cifra Club
           </a>
           {isAuthenticated ? (

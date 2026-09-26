@@ -107,12 +107,7 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
               Abra a música no Cifra Club, use o favorito <strong>Importar p/ Chord Seven</strong> e
               volte aqui com a cifra preenchida.
             </p>
-            <a
-              className="btn btn-gold"
-              href="https://www.cifraclub.com.br/"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a className="btn btn-gold" href="https://www.cifraclub.com.br/">
               Abrir Cifra Club
             </a>
             {importNote ? <p className="ok-text">{importNote}</p> : null}
