@@ -33,6 +33,14 @@ import {
   transposeKey,
 } from '../lib/transpose';
 
+function ToolIcon({ d }: { d: string }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path d={d} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 type CifraPart = ReturnType<typeof splitCifraLine>[number];
 
 function renderCifraParts(parts: CifraPart[], keyPrefix: string) {
@@ -872,44 +880,52 @@ export function CifraPage() {
             <div className="cifra-toolbar-group">
               <button
                 type="button"
-                className={`btn btn-ghost btn-compact${darkSheet ? ' is-active' : ''}`}
+                className={`btn btn-ghost btn-compact btn-icon${darkSheet ? ' is-active' : ''}`}
                 aria-pressed={darkSheet}
+                aria-label="Modo escuro"
                 onClick={() => setDarkSheet((v) => !v)}
                 title="Modo escuro da folha (D)"
               >
-                Escuro
+                <ToolIcon d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />
               </button>
               <button
                 type="button"
-                className="btn btn-ghost btn-compact"
+                className="btn btn-ghost btn-compact btn-icon"
+                aria-label="Imprimir"
                 onClick={() => window.print()}
                 title="Imprimir (P)"
               >
-                Imprimir
+                <ToolIcon d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" />
               </button>
               <button
                 type="button"
-                className="btn btn-ghost btn-compact"
+                className="btn btn-ghost btn-compact btn-icon"
+                aria-label="Compartilhar"
+                title="Compartilhar link"
                 onClick={() => void shareLink()}
               >
-                Compartilhar
+                <ToolIcon d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13" />
               </button>
               <button
                 type="button"
-                className="btn btn-ghost btn-compact"
+                className="btn btn-ghost btn-compact btn-icon"
+                aria-label="Salvar versão"
+                title="Salvar minha versão"
                 onClick={() => void saveMyVersion()}
               >
-                Salvar versão
+                <ToolIcon d="M5 3h11l3 3v13a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2zM8 3v5h7V3M8 21v-7h8v7" />
               </button>
               <button
                 type="button"
-                className="btn btn-ghost btn-compact"
+                className="btn btn-ghost btn-compact btn-icon"
+                aria-label="Voltar ao topo"
+                title="Voltar ao topo"
                 onClick={() => {
                   if (sheetRef.current) sheetRef.current.scrollTop = 0;
                   setScrolling(false);
                 }}
               >
-                Topo
+                <ToolIcon d="M5 4h14M12 20V9M6 14l6-6 6 6" />
               </button>
             </div>
 
