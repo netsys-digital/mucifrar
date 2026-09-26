@@ -78,14 +78,20 @@ export function PlaylistPage() {
             <li key={item.id} className="playlist-track">
               <span className="playlist-track-num">{index + 1}</span>
               <div className="playlist-track-info">
-                <Link to={`/cifra/${item.cifra.slug}`} className="playlist-track-title">
+                <Link
+                  to={`/cifra/${item.cifra.slug}?playlist=${encodeURIComponent(playlist.slug)}`}
+                  className="playlist-track-title"
+                >
                   {item.cifra.title}
                 </Link>
                 <p className="muted">
                   {item.cifra.artist} · Tom {item.cifra.key}
                 </p>
               </div>
-              <Link to={`/cifra/${item.cifra.slug}`} className="btn btn-ghost btn-compact">
+              <Link
+                to={`/cifra/${item.cifra.slug}?playlist=${encodeURIComponent(playlist.slug)}`}
+                className="btn btn-ghost btn-compact"
+              >
                 Abrir
               </Link>
             </li>

@@ -161,7 +161,12 @@ export function PlaylistManagePage() {
 
       <section className="section" style={{ marginTop: '1.5rem' }}>
         <div className="section-head">
-          <h2>Cifras na playlist</h2>
+          <div>
+            <h2>Cifras na playlist</h2>
+            <p className="muted">
+              Use as setas ↑ ↓ para definir a ordem. Essa ordem vale na navegação ao tocar.
+            </p>
+          </div>
           <p className="muted">{items.length} item{items.length === 1 ? '' : 's'}</p>
         </div>
 
@@ -176,9 +181,34 @@ export function PlaylistManagePage() {
           <ol className="playlist-tracklist">
             {items.map((item, index) => (
               <li key={item.id} className="playlist-track">
-                <span className="playlist-track-num">{index + 1}</span>
+                <div className="playlist-order-controls">
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-compact playlist-order-btn"
+                    disabled={index === 0}
+                    onClick={() => void moveItem(item.id, -1)}
+                    aria-label="Subir na ordem"
+                    title="Subir"
+                  >
+                    ↑
+                  </button>
+                  <span className="playlist-track-num">{index + 1}</span>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-compact playlist-order-btn"
+                    disabled={index === items.length - 1}
+                    onClick={() => void moveItem(item.id, 1)}
+                    aria-label="Descer na ordem"
+                    title="Descer"
+                  >
+                    ↓
+                  </button>
+                </div>
                 <div className="playlist-track-info">
-                  <Link to={`/cifra/${item.cifra.slug}`} className="playlist-track-title">
+                  <Link
+                    to={`/cifra/${item.cifra.slug}?playlist=${encodeURIComponent(playlist.slug)}&playlistId=${encodeURIComponent(playlist.id)}`}
+                    className="playlist-track-title"
+                  >
                     {item.cifra.title}
                   </Link>
                   <p className="muted">
@@ -187,24 +217,6 @@ export function PlaylistManagePage() {
                   </p>
                 </div>
                 <div className="mine-actions">
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-compact"
-                    disabled={index === 0}
-                    onClick={() => void moveItem(item.id, -1)}
-                    aria-label="Mover para cima"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-compact"
-                    disabled={index === items.length - 1}
-                    onClick={() => void moveItem(item.id, 1)}
-                    aria-label="Mover para baixo"
-                  >
-                    ↓
-                  </button>
                   <button
                     type="button"
                     className="btn btn-danger btn-compact"

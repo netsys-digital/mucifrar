@@ -889,6 +889,42 @@ button.portal-shortcut {
   z-index: 5;
 }
 
+.cifra-toolbar-primary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.85rem;
+  flex: 1 1 auto;
+}
+
+.cifra-toolbar-more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.85rem;
+  width: 100%;
+}
+
+.cifra-toolbar-more-toggle {
+  display: none;
+}
+
+.cifra-toolbar-scroll {
+  gap: 0.45rem;
+}
+
+.cifra-toolbar-scroll .cifra-speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.cifra-toolbar-scroll .cifra-speed input[type='range'] {
+  width: 5.5rem;
+}
+
 .cifra-toolbar-title {
   display: grid;
   gap: 0.1rem;
@@ -913,6 +949,19 @@ button.portal-shortcut {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
+}
+
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
+}
+
+.btn-icon svg {
+  display: block;
 }
 
 .cifra-toolbar-label {
@@ -1678,6 +1727,52 @@ html.cifra-fs-active body {
   }
 }
 
+@media (max-width: 768px) {
+  .cifra-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+    top: 0.35rem;
+  }
+
+  .cifra-chord-list {
+    display: none;
+  }
+
+  .cifra-toolbar-primary {
+    gap: 0.4rem 0.5rem;
+  }
+
+  .cifra-toolbar-more-toggle {
+    display: inline-flex;
+    margin-left: auto;
+  }
+
+  .cifra-toolbar-more {
+    display: none;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .cifra-toolbar--more-open .cifra-toolbar-more {
+    display: flex;
+  }
+
+  .cifra-toolbar-scroll .cifra-speed input[type='range'] {
+    width: 4.5rem;
+  }
+
+  .cifra-shortcuts {
+    width: 100%;
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .cifra-stage--dark .cifra-toolbar-more {
+    border-top-color: rgba(255, 255, 255, 0.12);
+  }
+}
+
 @media (max-width: 520px) {
   .cifra-grid {
     grid-template-columns: 1fr;
@@ -1834,6 +1929,66 @@ html.cifra-fs-active body {
 
 .playlist-track-title:hover {
   color: var(--gold-deep);
+}
+
+.playlist-order-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+}
+
+.playlist-order-btn {
+  min-width: 2rem;
+  padding: 0.15rem 0.4rem;
+  line-height: 1;
+  font-size: 1rem;
+}
+
+.playlist-order-btn:disabled {
+  opacity: 0.35;
+}
+
+.playlist-cifra-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--gold-soft), rgba(255, 255, 255, 0.92));
+  border: 1px solid rgba(166, 139, 79, 0.35);
+}
+
+.playlist-cifra-nav-back {
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.playlist-cifra-nav-back:hover {
+  color: var(--gold-deep);
+}
+
+.playlist-cifra-nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.playlist-cifra-nav-pos {
+  min-width: 3.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy);
+}
+
+.playlist-cifra-nav-controls .btn[aria-disabled='true'] {
+  opacity: 0.4;
+  pointer-events: none;
 }
 
 .add-playlist {

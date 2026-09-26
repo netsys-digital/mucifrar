@@ -6,10 +6,11 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { AddToPlaylistButton } from '../components/AddToPlaylistButton';
-import { api, type Cifra } from '../lib/api';
+import { api, type Cifra, type Playlist } from '../lib/api';
+import { cifraFromPlaylistHref } from '../lib/playlistNav';
 import {
   clampColumns,
   clampFontScale,
@@ -92,10 +93,15 @@ function parseTomParam(raw: string | null, originalKey: string): number | null {
 export function CifraPage() {
   const { slug = '' } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+
+  const playlistSlugParam = searchParams.get('playlist');
+  const playlistIdParam = searchParams.get('playlistId');
 
   const initialView = useMemo(() => loadViewPrefs(), []);
   const [cifra, setCifra] = useState<Cifra | null>(null);
+  const [playlistCtx, setPlaylistCtx] = useState<Playlist | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [columnCount, setColumnCount] = useState<ColumnCount>(initialView.columnCount);
@@ -109,6 +115,7 @@ export function CifraPage() {
   const [shareNote, setShareNote] = useState<string | null>(null);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [versionLoaded, setVersionLoaded] = useState(false);
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -176,6 +183,42 @@ export function CifraPage() {
   }, [slug, isAuthenticated, user?.id]);
 
   useEffect(() => {
+    setMobileToolsOpen(false);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!playlistSlugParam && !playlistIdParam) {
+      setPlaylistCtx(null);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        let pl: Playlist | null = null;
+        if (playlistIdParam && isAuthenticated) {
+          try {
+            pl = await api<Playlist>(`/api/playlists/${playlistIdParam}`);
+          } catch {
+            pl = null;
+          }
+        }
+        if (!pl && playlistSlugParam) {
+          pl = await api<Playlist>(
+            `/api/publico/playlists/${encodeURIComponent(playlistSlugParam)}`,
+          );
+        }
+        if (!cancelled) setPlaylistCtx(pl);
+      } catch {
+        if (!cancelled) setPlaylistCtx(null);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [playlistSlugParam, playlistIdParam, isAuthenticated]);
+
+  useEffect(() => {
     if (columnCount > maxColumns) setColumnCount(maxColumns);
   }, [columnCount, maxColumns]);
 
@@ -191,10 +234,23 @@ export function CifraPage() {
     next.delete('key');
     if (capo > 0) next.set('capo', String(capo));
     else next.delete('capo');
+    if (playlistSlugParam) next.set('playlist', playlistSlugParam);
+    else next.delete('playlist');
+    if (playlistIdParam) next.set('playlistId', playlistIdParam);
+    else next.delete('playlistId');
     if (next.toString() !== searchParams.toString()) {
       setSearchParams(next, { replace: true });
     }
-  }, [semitones, capo, cifra, versionLoaded, searchParams, setSearchParams]);
+  }, [
+    semitones,
+    capo,
+    cifra,
+    versionLoaded,
+    searchParams,
+    setSearchParams,
+    playlistSlugParam,
+    playlistIdParam,
+  ]);
 
   const exitFullscreen = useCallback(() => {
     setFullscreen(false);
@@ -383,6 +439,57 @@ export function CifraPage() {
 
   const uniqueChords = useMemo(() => listUniqueChords(displayContent), [displayContent]);
 
+  const playlistNav = useMemo(() => {
+    const items = (playlistCtx?.items ?? []).filter(
+      (i) => i.cifra.status === 'PUBLISHED' || i.cifra.slug === slug,
+    );
+    if (items.length < 2) return null;
+    const index = items.findIndex((i) => i.cifra.slug === slug);
+    if (index < 0) return null;
+    const prev = index > 0 ? items[index - 1] : null;
+    const next = index < items.length - 1 ? items[index + 1] : null;
+    const ctx = {
+      playlistSlug: playlistSlugParam ?? playlistCtx?.slug ?? null,
+      playlistId: playlistIdParam ?? playlistCtx?.id ?? null,
+    };
+    return {
+      title: playlistCtx!.title,
+      index,
+      total: items.length,
+      prevHref: prev ? cifraFromPlaylistHref(prev.cifra.slug, ctx) : null,
+      nextHref: next ? cifraFromPlaylistHref(next.cifra.slug, ctx) : null,
+      playlistHref: playlistCtx!.visibility === 'PUBLIC'
+        ? `/playlist/${playlistCtx!.slug}`
+        : `/minhas-playlists/${playlistCtx!.id}`,
+    };
+  }, [playlistCtx, slug, playlistSlugParam, playlistIdParam]);
+
+  useEffect(() => {
+    if (!playlistNav) return;
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.key === 'ArrowLeft' && playlistNav?.prevHref) {
+        e.preventDefault();
+        navigate(playlistNav.prevHref);
+      }
+      if (e.key === 'ArrowRight' && playlistNav?.nextHref) {
+        e.preventDefault();
+        navigate(playlistNav.nextHref);
+      }
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [playlistNav, navigate]);
+
   if (loading) {
     return (
       <div className="page cifra-view">
@@ -427,6 +534,37 @@ export function CifraPage() {
 
   return (
     <article className="page cifra-view">
+      {!fullscreen && playlistNav ? (
+        <nav className="playlist-cifra-nav print-hide" aria-label="Navegação da playlist">
+          <Link to={playlistNav.playlistHref} className="playlist-cifra-nav-back">
+            ← {playlistNav.title}
+          </Link>
+          <div className="playlist-cifra-nav-controls">
+            {playlistNav.prevHref ? (
+              <Link to={playlistNav.prevHref} className="btn btn-ghost btn-compact">
+                ← Anterior
+              </Link>
+            ) : (
+              <span className="btn btn-ghost btn-compact" aria-disabled="true">
+                ← Anterior
+              </span>
+            )}
+            <span className="playlist-cifra-nav-pos">
+              {playlistNav.index + 1} / {playlistNav.total}
+            </span>
+            {playlistNav.nextHref ? (
+              <Link to={playlistNav.nextHref} className="btn btn-ghost btn-compact">
+                Próxima →
+              </Link>
+            ) : (
+              <span className="btn btn-ghost btn-compact" aria-disabled="true">
+                Próxima →
+              </span>
+            )}
+          </div>
+        </nav>
+      ) : null}
+
       {!fullscreen ? (
         <header className="cifra-view-head">
           <div>
@@ -458,7 +596,11 @@ export function CifraPage() {
       </div>
 
       <div ref={stageRef} className={stageClass}>
-        <div className="cifra-toolbar print-hide" role="toolbar" aria-label="Controles da cifra">
+        <div
+          className={`cifra-toolbar print-hide${mobileToolsOpen ? ' cifra-toolbar--more-open' : ''}`}
+          role="toolbar"
+          aria-label="Controles da cifra"
+        >
           {fullscreen ? (
             <div className="cifra-toolbar-title">
               <strong>{cifra.title}</strong>
@@ -466,116 +608,217 @@ export function CifraPage() {
             </div>
           ) : null}
 
-          <div className="cifra-toolbar-group">
-            <span className="cifra-toolbar-label">Tom</span>
-            <button
-              type="button"
-              className="btn btn-ghost btn-compact"
-              aria-label="Diminuir meio tom"
-              onClick={() => setSemitones((s) => normalizeSemitones(s - 1))}
-            >
-              −
-            </button>
-            <span className="cifra-key-pill" title={`Deslocamento ${formatTransposeLabel(semitones)}`}>
-              {displayKey}
-              {semitones !== 0 ? <small>{formatTransposeLabel(semitones)}</small> : null}
-            </span>
-            <button
-              type="button"
-              className="btn btn-ghost btn-compact"
-              aria-label="Aumentar meio tom"
-              onClick={() => setSemitones((s) => normalizeSemitones(s + 1))}
-            >
-              +
-            </button>
-            {semitones !== 0 ? (
-              <button type="button" className="btn btn-ghost btn-compact" onClick={() => setSemitones(0)}>
-                Original
+          <div className="cifra-toolbar-primary">
+            <div className="cifra-toolbar-group">
+              <span className="cifra-toolbar-label">Tom</span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                aria-label="Diminuir meio tom"
+                onClick={() => setSemitones((s) => normalizeSemitones(s - 1))}
+              >
+                −
               </button>
-            ) : null}
-          </div>
-
-          <div className="cifra-toolbar-group">
-            <span className="cifra-toolbar-label">Capo</span>
-            <button
-              type="button"
-              className="btn btn-ghost btn-compact"
-              aria-label="Diminuir capo"
-              disabled={capo <= 0}
-              onClick={() => setCapo((c) => Math.max(0, c - 1))}
-            >
-              −
-            </button>
-            <span className="cifra-key-pill" title={capo > 0 ? `Soa ${soundingKey}` : 'Sem capo'}>
-              {capo === 0 ? '0' : capo}
-              {capo > 0 ? <small>soa {soundingKey}</small> : null}
-            </span>
-            <button
-              type="button"
-              className="btn btn-ghost btn-compact"
-              aria-label="Aumentar capo"
-              disabled={capo >= 12}
-              onClick={() => setCapo((c) => Math.min(12, c + 1))}
-            >
-              +
-            </button>
-          </div>
-
-          <div className="cifra-toolbar-group">
-            <span className="cifra-toolbar-label">Texto</span>
-            <button type="button" className="btn btn-ghost btn-compact" onClick={() => bumpFont(-0.05)}>
-              A−
-            </button>
-            <button type="button" className="btn btn-ghost btn-compact" onClick={() => bumpFont(0.05)}>
-              A+
-            </button>
-          </div>
-
-          <div className="cifra-toolbar-group">
-            <span className="cifra-toolbar-label">Colunas</span>
-            <div className="cifra-col-picker" role="group" aria-label="Número de colunas">
-              {columnOptions.map((n) => (
+              <span className="cifra-key-pill" title={`Deslocamento ${formatTransposeLabel(semitones)}`}>
+                {displayKey}
+                {semitones !== 0 ? <small>{formatTransposeLabel(semitones)}</small> : null}
+              </span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                aria-label="Aumentar meio tom"
+                onClick={() => setSemitones((s) => normalizeSemitones(s + 1))}
+              >
+                +
+              </button>
+              {semitones !== 0 ? (
                 <button
-                  key={n}
                   type="button"
-                  className={`btn btn-ghost btn-compact${columnCount === n ? ' is-active' : ''}`}
-                  aria-pressed={columnCount === n}
-                  onClick={() => setColumnCount(clampColumns(n, maxColumns))}
+                  className="btn btn-ghost btn-compact"
+                  onClick={() => setSemitones(0)}
                 >
-                  {n}
+                  Original
                 </button>
-              ))}
+              ) : null}
             </div>
+
+            <div className="cifra-toolbar-group">
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                aria-label="Diminuir texto"
+                title="Diminuir texto"
+                onClick={() => bumpFont(-0.05)}
+              >
+                A−
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                aria-label="Aumentar texto"
+                title="Aumentar texto"
+                onClick={() => bumpFont(0.05)}
+              >
+                A+
+              </button>
+            </div>
+
+            <div className="cifra-toolbar-group">
+              <button
+                type="button"
+                className={`btn btn-ghost btn-compact btn-icon${fullscreen ? ' is-active' : ''}`}
+                aria-pressed={fullscreen}
+                aria-label={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                title={fullscreen ? 'Sair da tela cheia (F)' : 'Tela cheia (F)'}
+                onClick={toggleFullscreen}
+              >
+                {fullscreen ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path
+                      d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path
+                      d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            <div className="cifra-toolbar-group cifra-toolbar-scroll">
+              <button
+                type="button"
+                className={`btn btn-ghost btn-compact${scrolling ? ' is-active' : ''}`}
+                onClick={() => setScrolling((v) => !v)}
+                title="Espaço: play/pause"
+              >
+                {scrolling ? 'Pausar' : 'Scroll'}
+              </button>
+              <label className="cifra-speed">
+                <span className="cifra-toolbar-label">Vel.</span>
+                <input
+                  type="range"
+                  min={8}
+                  max={140}
+                  value={scrollSpeed}
+                  onChange={(e) => setScrollSpeed(clampSpeed(Number(e.target.value)))}
+                />
+              </label>
+            </div>
+
+            <button
+              type="button"
+              className={`btn btn-ghost btn-compact cifra-toolbar-more-toggle${mobileToolsOpen ? ' is-active' : ''}`}
+              aria-expanded={mobileToolsOpen}
+              aria-controls="cifra-toolbar-more"
+              onClick={() => setMobileToolsOpen((v) => !v)}
+            >
+              {mobileToolsOpen ? 'Menos' : 'Mais'}
+            </button>
           </div>
 
-          <div className="cifra-toolbar-group">
-            <button
-              type="button"
-              className={`btn btn-ghost btn-compact${darkSheet ? ' is-active' : ''}`}
-              aria-pressed={darkSheet}
-              onClick={() => setDarkSheet((v) => !v)}
-              title="Modo escuro da folha (D)"
-            >
-              Escuro
-            </button>
-            <button
-              type="button"
-              className={`btn btn-ghost btn-compact${fullscreen ? ' is-active' : ''}`}
-              aria-pressed={fullscreen}
-              onClick={toggleFullscreen}
-              title="Tela cheia (F)"
-            >
-              {fullscreen ? 'Sair tela cheia' : 'Tela cheia'}
-            </button>
-            <button type="button" className="btn btn-ghost btn-compact" onClick={() => window.print()} title="Imprimir (P)">
-              Imprimir
-            </button>
-            <button type="button" className="btn btn-ghost btn-compact" onClick={() => void shareLink()}>
-              Compartilhar
-            </button>
-            <button type="button" className="btn btn-ghost btn-compact" onClick={() => void saveMyVersion()}>
-              Salvar versão
-            </button>
+          <div id="cifra-toolbar-more" className="cifra-toolbar-more">
+            <div className="cifra-toolbar-group">
+              <span className="cifra-toolbar-label">Capo</span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                aria-label="Diminuir capo"
+                disabled={capo <= 0}
+                onClick={() => setCapo((c) => Math.max(0, c - 1))}
+              >
+                −
+              </button>
+              <span className="cifra-key-pill" title={capo > 0 ? `Soa ${soundingKey}` : 'Sem capo'}>
+                {capo === 0 ? '0' : capo}
+                {capo > 0 ? <small>soa {soundingKey}</small> : null}
+              </span>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                aria-label="Aumentar capo"
+                disabled={capo >= 12}
+                onClick={() => setCapo((c) => Math.min(12, c + 1))}
+              >
+                +
+              </button>
+            </div>
+
+            <div className="cifra-toolbar-group">
+              <span className="cifra-toolbar-label">Colunas</span>
+              <div className="cifra-col-picker" role="group" aria-label="Número de colunas">
+                {columnOptions.map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`btn btn-ghost btn-compact${columnCount === n ? ' is-active' : ''}`}
+                    aria-pressed={columnCount === n}
+                    onClick={() => setColumnCount(clampColumns(n, maxColumns))}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="cifra-toolbar-group">
+              <button
+                type="button"
+                className={`btn btn-ghost btn-compact${darkSheet ? ' is-active' : ''}`}
+                aria-pressed={darkSheet}
+                onClick={() => setDarkSheet((v) => !v)}
+                title="Modo escuro da folha (D)"
+              >
+                Escuro
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                onClick={() => window.print()}
+                title="Imprimir (P)"
+              >
+                Imprimir
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                onClick={() => void shareLink()}
+              >
+                Compartilhar
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                onClick={() => void saveMyVersion()}
+              >
+                Salvar versão
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                onClick={() => {
+                  if (sheetRef.current) sheetRef.current.scrollTop = 0;
+                  setScrolling(false);
+                }}
+              >
+                Topo
+              </button>
+            </div>
+
+            <span className="cifra-shortcuts muted" title="Atalhos">
+              +/− tom · [ ] zoom · 1–4 colunas · F tela cheia · D escuro · Espaço scroll · P imprimir
+            </span>
           </div>
         </div>
 
@@ -592,41 +835,6 @@ export function CifraPage() {
             ))}
           </div>
         ) : null}
-
-        <div className="cifra-scroll-bar print-hide">
-          <button
-            type="button"
-            className={`btn btn-ghost btn-compact${scrolling ? ' is-active' : ''}`}
-            onClick={() => setScrolling((v) => !v)}
-            title="Espaço: play/pause"
-          >
-            {scrolling ? 'Pausar scroll' : 'Auto-scroll'}
-          </button>
-          <label className="cifra-speed">
-            Velocidade
-            <input
-              type="range"
-              min={8}
-              max={140}
-              value={scrollSpeed}
-              onChange={(e) => setScrollSpeed(clampSpeed(Number(e.target.value)))}
-            />
-            <span>{scrollSpeed}</span>
-          </label>
-          <button
-            type="button"
-            className="btn btn-ghost btn-compact"
-            onClick={() => {
-              if (sheetRef.current) sheetRef.current.scrollTop = 0;
-              setScrolling(false);
-            }}
-          >
-            Topo
-          </button>
-          <span className="cifra-shortcuts muted" title="Atalhos">
-            +/− tom · [ ] zoom · 1–4 colunas · F tela cheia · D escuro · Espaço scroll · P imprimir
-          </span>
-        </div>
 
         <div
           ref={sheetRef}
