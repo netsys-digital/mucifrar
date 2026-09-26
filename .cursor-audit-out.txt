@@ -1,0 +1,81 @@
+=== AUDIT RUN 2026-09-26T02:47:12Z ===
+KEY_FILE=none
+--- attempt 1: BatchMode=yes ---
+=== PATHS ===
+drwxr-xr-x 7 root root 4096 Sep 17 14:35 /app/docker-config
+drwxr-xr-x 5 root root 4096 Sep 26 02:45 /app/mucifrar
+
+=== MUCIFRAR LS ===
+total 244
+drwxr-xr-x  5 root root   4096 Sep 26 02:45 .
+drwxr-xr-x 12 root root   4096 Sep 26 01:44 ..
+-rw-r--r--  1 root root    487 Sep 26 02:45 .env
+-rw-r--r--  1 root root   1163 Sep 26 02:23 .env.example
+drwxr-xr-x  7 root root   4096 Sep 26 02:23 .git
+-rw-r--r--  1 root root    113 Sep 26 01:45 .gitignore
+-rw-r--r--  1 root root     95 Sep 26 01:45 .prettierrc
+-rw-r--r--  1 root root   2276 Sep 26 02:23 README.md
+drwxr-xr-x  4 root root   4096 Sep 26 01:45 apps
+-rw-r--r--  1 root root   1652 Sep 26 02:23 docker-compose.prod.yml
+-rw-r--r--  1 root root    753 Sep 26 02:23 docker-compose.yml
+drwxr-xr-x  2 root root   4096 Sep 26 01:45 docs
+-rw-r--r--  1 root root 195210 Sep 26 01:45 package-lock.json
+-rw-r--r--  1 root root   1128 Sep 26 02:23 package.json
+
+=== ENV KEYS (masked) ===
+POSTGRES_PORT=***
+MUCIFRAR_DB_PASSWORD=***
+DATABASE_URL=***
+API_PORT=***
+JWT_SECRET=***
+JWT_REFRESH_SECRET=***
+CORS_ORIGIN=***
+APP_URL=***
+NODE_ENV=***
+RATE_LIMIT_API_MAX=***
+RATE_LIMIT_AUTH_MAX=***
+RATE_LIMIT_PUBLIC_MAX=***
+VITE_API_URL=***
+
+=== ENV CHECKS ===
+WEB_PORT=unset
+NODE_ENV=production
+CORS_ORIGIN=https://chordseven.netsys.company
+APP_URL=https://chordseven.netsys.company
+JWT_SECRET=set yes length=64
+JWT_REFRESH_SECRET=set yes length=64
+MUCIFRAR_DB_PASSWORD=set yes length=7
+DATABASE_URL host=127.0.0.1
+
+=== COMPOSE PORTS ===
+55:    ports:
+56:      - '${WEB_PORT:-8095}:80'
+
+=== GIT ===
+82c4f38 Up
+
+=== DOCKER-CONFIG GREP ===
+--- .env ---
+--- .env.example ---
+--- postgres/init/01-create-apps.sh ---
+
+=== POSTGRES ===
+
+=== CONTAINERS ===
+ejc-web-1                  Up 7 days               0.0.0.0:8095->80/tcp, [::]:8095->80/tcp
+netsys-redis               Up 8 days (healthy)     127.0.0.1:6379->6379/tcp
+netsys-postgres            Up 2 weeks (healthy)    0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+
+=== PORTS SS ===
+LISTEN 0      4096         0.0.0.0:8095      0.0.0.0:*    users:(("docker-proxy",pid=988692,fd=8))                                                
+LISTEN 0      4096         0.0.0.0:8096      0.0.0.0:*    users:(("docker-proxy",pid=988649,fd=8))                                                
+LISTEN 0      4096            [::]:8095         [::]:*    users:(("docker-proxy",pid=988698,fd=8))                                                
+LISTEN 0      4096            [::]:8096         [::]:*    users:(("docker-proxy",pid=988659,fd=8))                                                
+
+=== IMAGES ===
+netsys-node:20                     54263b2c0114        213MB         54.3MB        
+netsys-web-nginx:base              4e1c318f236d       77.7MB         22.1MB        
+
+=== HEALTH ===
+mucifrar container not running - skip curl
+SSH_EXIT=0 (BatchMode)

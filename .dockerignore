@@ -1,0 +1,14 @@
+.git
+.env
+.env.*
+apps/api/.env
+apps/api/.env.*
+apps/web/.env
+apps/web/.env.*
+**/node_modules
+**/dist
+**/.turbo
+**/*.log
+.cursor
+docs
+README.md

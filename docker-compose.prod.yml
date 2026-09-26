@@ -31,8 +31,11 @@ services:
       RATE_LIMIT_API_MAX: ${RATE_LIMIT_API_MAX:-1000}
       RATE_LIMIT_AUTH_MAX: ${RATE_LIMIT_AUTH_MAX:-30}
       RATE_LIMIT_PUBLIC_MAX: ${RATE_LIMIT_PUBLIC_MAX:-120}
+    # Alias único: "api" na rede netsys colide com outros apps (ex.: CAC também em :3003).
     networks:
-      - netsys
+      netsys:
+        aliases:
+          - mucifrar-api
     expose:
       - '3003'
 
@@ -47,7 +50,7 @@ services:
         WEB_DIR: apps/web
     restart: unless-stopped
     environment:
-      API_UPSTREAM: api:3003
+      API_UPSTREAM: mucifrar-api:3003
     depends_on:
       - api
     networks:

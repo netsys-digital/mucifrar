@@ -5,8 +5,9 @@ import { z } from 'zod';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
+// Não usar override: true — em Docker o JWT_* do compose deve prevalecer.
 config({ path: resolve(__dirname, '../../../.env') });
-config({ path: resolve(__dirname, '../../.env'), override: true });
+config({ path: resolve(__dirname, '../../.env') });
 
 if (process.env.DATABASE_URL?.includes('@localhost')) {
   process.env.DATABASE_URL = process.env.DATABASE_URL.replace('@localhost', '@127.0.0.1');
