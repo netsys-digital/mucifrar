@@ -1,0 +1,33 @@
+=== DIAG 2026-09-26T04:20:55Z ===
+KEY=/home/netsys/.ssh/NETSYS_HETZNER
+=== STEP 1 ===
+mucifrar-web-1 Up 15 minutes 0.0.0.0:8097->80/tcp, [::]:8097->80/tcp
+mucifrar-api-1 Up 29 minutes 3003/tcp
+API_UPSTREAM=mucifrar-api:3003
+health={"ok":true,"service":"mucifrar-api"}
+=== STEP 2 imprimir ===
+status 403
+len 452
+<HTML><HEAD>
+<TITLE>Access Denied</TITLE>
+</HEAD><BODY>
+<H1>Access Denied</H1>
+ 
+You don't have permission to access "http&#58;&#47;&#47;www&#46;cifraclub&#46;com&#46;br&#47;adventistas&#45;brasil&#47
+=== STEP 2 song ===
+status 403
+len 435
+<HTML><HEAD>
+<TITLE>Access Denied</TITLE>
+</HEAD><BODY>
+<H1>Access Denied</H1>
+ 
+You don't have permission to access "http&#58;&#47;&#47;www&#46;cifraclub&#46;com&#46;br&#47;adventistas&#45;brasil&#47
+=== STEP 3 ===
+REG={"accessToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbXVodnRyanowMDA3a3IwNmc3eWhlMWozIiwiZW1haWwiOiJkaWFnMTc5MDM5NjQ2MUBleGFtcGxlLmNvbSIsInJvbGUiOiJVU0VSIiwiaWF0IjoxNzkwMzk2NDYyLCJleHAiOjE3OTAzOTczNjJ9.lcx6YDJASOa4b6HTcqaB64lveS-6nb5fI9q8Lkrxzo8","refreshToken":"40d4b548fa7e482477bfdcaeebc7a3f3b5d3fb7e811b574e3feb0e47fe73a73b72a8a58e9c356fd97d32eca20a211b2a","user":{"id":"cmuhvtrjz0007kr06g7yhe1j3","name":"Diag","email":"diag1790396461@example.com","role":"USER","status":"ACTIVE","mustChangePassword":false,"createdAt":"2026-09-26T04:21:02.016Z"}}
+TOKEN_LEN=241
+IMPORT={"error":"Não foi possível acessar o Cifra Club agora. Tente novamente em alguns segundos."}
+HTTP_CODE:502
+=== API LOGS ===
+[mucifrar-api] ouvindo em http://localhost:3003
+SSH_EXIT=0

@@ -216,6 +216,12 @@ class CifraClubUpstreamError extends Error {
 
 function toFetchAppError(err: unknown): AppError {
   if (err instanceof CifraClubUpstreamError) {
+    if (err.upstreamStatus === 403 || err.upstreamStatus === 429) {
+      return new AppError(
+        502,
+        'O Cifra Club bloqueou o acesso a partir deste servidor. Cole a cifra manualmente no formulário abaixo.',
+      );
+    }
     return new AppError(502, err.message);
   }
   if (err instanceof Error && err.name === 'AbortError') {
@@ -348,9 +354,12 @@ export async function importFromCifraClub(rawUrl: string): Promise<CifraClubImpo
   }
 
   if (!lastHtml && fetchErrors.length > 0) {
+    const blocked = fetchErrors.some((m) => /status 403|status 429|bloqueou/i.test(m));
     throw new AppError(
       502,
-      `Não foi possível acessar o Cifra Club agora. Tente novamente em alguns segundos.`,
+      blocked
+        ? 'O Cifra Club bloqueou o acesso a partir deste servidor. Cole a cifra manualmente no formulário abaixo.'
+        : 'Não foi possível acessar o Cifra Club agora. Tente novamente ou cole a cifra manualmente.',
     );
   }
 

@@ -120,7 +120,10 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
       <form className="cifra-import" onSubmit={(e) => void onImport(e)}>
         <div>
           <h2>Importar do Cifra Club</h2>
-          <p className="muted">Cole o link da cifra para preencher o formulário automaticamente.</p>
+          <p className="muted">
+            Cole o link da cifra para preencher o formulário. Se o site bloquear o servidor, cole o
+            texto manualmente abaixo.
+          </p>
         </div>
         <div className="cifra-import-row">
           <input
@@ -136,11 +139,10 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
           </button>
         </div>
         {importNote ? <p className="ok-text">{importNote}</p> : null}
+        {error ? <p className="error-text">{error}</p> : null}
       </form>
 
       <form className="cifra-form" onSubmit={(e) => void onSubmit(e)}>
-        {error ? <p className="error-text">{error}</p> : null}
-
         <div className="form-grid">
           <label>
             Título
