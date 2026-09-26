@@ -20,7 +20,7 @@ const DEFAULT_VIEW: CifraViewPrefs = {
   fontScale: 1,
   columnCount: 1,
   darkSheet: false,
-  scrollSpeed: 40,
+  scrollSpeed: 16,
 };
 
 function clampFontScale(n: number): number {
@@ -28,7 +28,8 @@ function clampFontScale(n: number): number {
 }
 
 function clampSpeed(n: number): number {
-  return Math.min(140, Math.max(8, Math.round(n)));
+  // 1–60 px/s com passo fino (antes 8–140 era grosso demais)
+  return Math.min(60, Math.max(1, Math.round(n)));
 }
 
 function clampColumns(n: number, max: ColumnCount = 4): ColumnCount {

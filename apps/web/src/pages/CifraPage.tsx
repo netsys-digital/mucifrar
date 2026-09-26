@@ -27,54 +27,61 @@ import {
   normalizeSemitones,
   semitonesBetweenKeys,
   splitCifraBlocks,
-  distributeLinesToColumns,
+  distributeAnnotatedColumns,
   splitCifraLine,
   transposeContent,
   transposeKey,
 } from '../lib/transpose';
 
-function renderBlockLines(block: string[]) {
+function renderBlockLines(block: string[], highlights?: boolean[]) {
   return block.map((line, lineIdx) => (
     <Fragment key={lineIdx}>
       {lineIdx > 0 ? '\n' : null}
-      {splitCifraLine(line).map((part, partIdx) => {
-        if (part.type === 'chord') {
-          return (
-            <span key={partIdx} className="cifra-chord">
-              {part.value}
-            </span>
-          );
-        }
-        if (part.type === 'section') {
-          return (
-            <span key={partIdx} className="cifra-section">
-              {part.value}
-            </span>
-          );
-        }
-        return <Fragment key={partIdx}>{part.value}</Fragment>;
-      })}
+      <span className={highlights?.[lineIdx] ? 'cifra-line cifra-line--intro-echo' : 'cifra-line'}>
+        {splitCifraLine(line).map((part, partIdx) => {
+          if (part.type === 'chord') {
+            return (
+              <span key={partIdx} className="cifra-chord">
+                {part.value}
+              </span>
+            );
+          }
+          if (part.type === 'section') {
+            return (
+              <span key={partIdx} className="cifra-section">
+                {part.value}
+              </span>
+            );
+          }
+          return <Fragment key={partIdx}>{part.value}</Fragment>;
+        })}
+      </span>
     </Fragment>
   ));
 }
 
 function CifraSheetBody({ content, columns }: { content: string; columns: number }) {
-  const columnLines = useMemo(
-    () => distributeLinesToColumns(content, columns),
+  const annotatedColumns = useMemo(
+    () => distributeAnnotatedColumns(content, columns),
     [content, columns],
   );
 
   return (
     <>
-      {columnLines.map((lines, colIdx) => {
-        const blocks = splitCifraBlocks(lines.join('\n'));
+      {annotatedColumns.map((col, colIdx) => {
+        const blocks = splitCifraBlocks(col.lines.join('\n'));
+        let lineCursor = 0;
         return (
           <div key={colIdx} className="cifra-sheet-col">
-            {blocks.map((block, blockIdx) => (
-              <div key={blockIdx} className="cifra-block">
-                {renderBlockLines(block)}
-              </div>
-            ))}
+            {blocks.map((block, blockIdx) => {
+              const blockFlags = col.introEcho.slice(lineCursor, lineCursor + block.length);
+              lineCursor += block.length;
+              return (
+                <div key={blockIdx} className="cifra-block">
+                  {renderBlockLines(block, blockFlags)}
+                </div>
+              );
+            })}
           </div>
         );
       })}
@@ -709,11 +716,14 @@ export function CifraPage() {
                 <span className="cifra-toolbar-label">Vel.</span>
                 <input
                   type="range"
-                  min={8}
-                  max={140}
+                  min={1}
+                  max={60}
+                  step={1}
                   value={scrollSpeed}
                   onChange={(e) => setScrollSpeed(clampSpeed(Number(e.target.value)))}
+                  title={`Velocidade ${scrollSpeed}`}
                 />
+                <span className="cifra-speed-value">{scrollSpeed}</span>
               </label>
             </div>
 

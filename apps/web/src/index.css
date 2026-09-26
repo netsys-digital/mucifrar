@@ -922,7 +922,15 @@ button.portal-shortcut {
 }
 
 .cifra-toolbar-scroll .cifra-speed input[type='range'] {
-  width: 5.5rem;
+  width: 7rem;
+}
+
+.cifra-speed-value {
+  min-width: 1.4rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 
 .cifra-toolbar-title {
@@ -1077,6 +1085,31 @@ button.portal-shortcut {
 .cifra-chord {
   color: var(--chord);
   font-weight: 700;
+}
+
+.cifra-line {
+  display: inline;
+}
+
+.cifra-line--intro-echo {
+  background: linear-gradient(
+    transparent 55%,
+    rgba(166, 139, 79, 0.38) 55%,
+    rgba(166, 139, 79, 0.38) 92%,
+    transparent 92%
+  );
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  border-radius: 2px;
+}
+
+.cifra-stage--dark .cifra-line--intro-echo {
+  background: linear-gradient(
+    transparent 55%,
+    rgba(166, 139, 79, 0.45) 55%,
+    rgba(166, 139, 79, 0.45) 92%,
+    transparent 92%
+  );
 }
 
 .cifra-section {

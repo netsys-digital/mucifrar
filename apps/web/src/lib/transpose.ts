@@ -171,29 +171,191 @@ export function splitCifraBlocks(content: string): string[][] {
   return blocks;
 }
 
+function isSectionLine(line: string): boolean {
+  return /^\s*\[[^\]]+\]/.test(line);
+}
+
+function chordsInLine(line: string): string[] {
+  if (!isChordHeavyLine(line)) return [];
+  const re = new RegExp(CHORD_TOKEN.source, 'g');
+  const chords: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(line)) !== null) {
+    chords.push(match[0]);
+  }
+  return chords;
+}
+
 /**
- * Divide o conteúdo em N colunas com base no número de linhas.
- * Cada coluna recebe floor(total/N) ou ceil(total/N) linhas (diferença no máximo 1).
+ * Agrupa linha de acordes + letra seguinte (evita partir o par entre colunas).
  */
-export function distributeLinesToColumns(content: string, columnCount: number): string[][] {
+export function groupCifraLineUnits(lines: string[]): string[][] {
+  const units: string[][] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i]!;
+    const next = lines[i + 1];
+    if (
+      next != null &&
+      isChordHeavyLine(line) &&
+      !isChordHeavyLine(next) &&
+      !isSectionLine(next)
+    ) {
+      units.push([line, next]);
+      i += 2;
+    } else {
+      units.push([line]);
+      i += 1;
+    }
+  }
+  return units;
+}
+
+/**
+ * Divide o conteúdo em N colunas respeitando pares acorde+letra.
+ * Retorna também flags de eco da intro alinhadas a cada linha.
+ */
+export function distributeAnnotatedColumns(
+  content: string,
+  columnCount: number,
+): { lines: string[]; introEcho: boolean[] }[] {
   const n = Math.max(1, Math.min(4, Math.floor(columnCount)));
   const lines = content.split('\n');
-  if (n <= 1 || lines.length === 0) return [lines];
+  const flags = markIntroEchoLines(content);
+  const annotated = lines.map((text, i) => ({ text, introEcho: flags[i] ?? false }));
 
-  const total = lines.length;
+  if (n <= 1 || annotated.length === 0) {
+    return [{ lines, introEcho: flags }];
+  }
+
+  const units: { text: string; introEcho: boolean }[][] = [];
+  let i = 0;
+  while (i < annotated.length) {
+    const cur = annotated[i]!;
+    const next = annotated[i + 1];
+    if (
+      next &&
+      isChordHeavyLine(cur.text) &&
+      !isChordHeavyLine(next.text) &&
+      !isSectionLine(next.text)
+    ) {
+      units.push([cur, next]);
+      i += 2;
+    } else {
+      units.push([cur]);
+      i += 1;
+    }
+  }
+
+  const total = units.length;
   const base = Math.floor(total / n);
   const remainder = total % n;
-  const columns: string[][] = [];
+  const columns: { lines: string[]; introEcho: boolean[] }[] = [];
   let offset = 0;
 
-  for (let i = 0; i < n; i += 1) {
-    const size = base + (i < remainder ? 1 : 0);
+  for (let c = 0; c < n; c += 1) {
+    const size = base + (c < remainder ? 1 : 0);
     if (size <= 0) continue;
-    columns.push(lines.slice(offset, offset + size));
+    const flat = units.slice(offset, offset + size).flat();
+    columns.push({
+      lines: flat.map((row) => row.text),
+      introEcho: flat.map((row) => row.introEcho),
+    });
     offset += size;
   }
 
-  return columns.length > 0 ? columns : [lines];
+  return columns.length > 0 ? columns : [{ lines, introEcho: flags }];
+}
+
+/**
+ * Divide o conteúdo em N colunas respeitando pares acorde+letra.
+ */
+export function distributeLinesToColumns(content: string, columnCount: number): string[][] {
+  return distributeAnnotatedColumns(content, columnCount).map((col) => col.lines);
+}
+
+const INTRO_SECTION_RE = /^\s*\[\s*intro[^\]]*\]/i;
+
+function findIntroBlockRange(lines: string[]): { start: number; end: number } | null {
+  let start = -1;
+  for (let i = 0; i < lines.length; i += 1) {
+    if (INTRO_SECTION_RE.test(lines[i]!)) {
+      start = i;
+      break;
+    }
+  }
+  if (start < 0) return null;
+
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i += 1) {
+    if (isSectionLine(lines[i]!) && !INTRO_SECTION_RE.test(lines[i]!)) {
+      end = i;
+      break;
+    }
+  }
+  return { start, end };
+}
+
+function extractIntroChordSequence(lines: string[], start: number, end: number): string[] {
+  const seq: string[] = [];
+  for (let i = start; i < end; i += 1) {
+    seq.push(...chordsInLine(lines[i]!));
+  }
+  return seq;
+}
+
+function sequencesEqual(a: string[], b: string[]): boolean {
+  if (a.length === 0 || a.length !== b.length) return false;
+  return a.every((c, i) => c === b[i]);
+}
+
+/**
+ * Marca linhas (fora do bloco [Intro]) cuja sequência de acordes
+ * repete a introdução — referência visual ao voltar o tema.
+ */
+export function markIntroEchoLines(content: string): boolean[] {
+  const lines = content.split('\n');
+  const flags = lines.map(() => false);
+  const range = findIntroBlockRange(lines);
+  if (!range) return flags;
+
+  const introSeq = extractIntroChordSequence(lines, range.start, range.end);
+  if (introSeq.length < 2) return flags;
+
+  type ChordLine = { idx: number; chords: string[] };
+  const chordLines: ChordLine[] = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    if (i >= range.start && i < range.end) continue;
+    if (!isChordHeavyLine(lines[i]!)) continue;
+    const chords = chordsInLine(lines[i]!);
+    if (chords.length === 0) continue;
+    chordLines.push({ idx: i, chords });
+  }
+
+  for (let start = 0; start < chordLines.length; start += 1) {
+    const acc: string[] = [];
+    for (let end = start; end < chordLines.length; end += 1) {
+      acc.push(...chordLines[end]!.chords);
+      if (acc.length > introSeq.length) break;
+      if (acc.length === introSeq.length && sequencesEqual(acc, introSeq)) {
+        for (let k = start; k <= end; k += 1) {
+          const li = chordLines[k]!.idx;
+          flags[li] = true;
+          const lyric = li + 1;
+          if (
+            lyric < lines.length &&
+            !isChordHeavyLine(lines[lyric]!) &&
+            !isSectionLine(lines[lyric]!)
+          ) {
+            flags[lyric] = true;
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  return flags;
 }
 
 /** @deprecated Preferir distributeLinesToColumns — mantido para compatibilidade. */
@@ -202,7 +364,7 @@ export function distributeBlocksToColumns(blocks: string[][], columnCount: numbe
     idx === 0 ? block : ['', ...block],
   );
   const content = flat.join('\n');
-  return distributeLinesToColumns(content, columnCount).map((lines) => splitCifraBlocks(lines.join('\n')));
+  return distributeLinesToColumns(content, columnCount).map((col) => splitCifraBlocks(col.join('\n')));
 }
 
 export function listUniqueChords(content: string): string[] {
