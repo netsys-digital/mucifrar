@@ -2273,6 +2273,44 @@ html.cifra-fs-active body {
   cursor: grab;
 }
 
+.importador-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.importador-step-body {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.importador-video {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.importador-video video {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #000;
+  box-shadow: var(--shadow);
+}
+
+.importador-video figcaption {
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .importador-step {
+    grid-template-columns: 1fr;
+  }
+}
+
 .importador-tabs {
   display: flex;
   gap: 0.4rem;

@@ -13,6 +13,15 @@ function detectDevice(): Device {
   return window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'pc';
 }
 
+function StepVideo({ src, label }: { src: string; label: string }) {
+  return (
+    <figure className="importador-video">
+      <video src={src} controls muted loop playsInline autoPlay preload="metadata" aria-label={label} />
+      <figcaption className="muted">{label}</figcaption>
+    </figure>
+  );
+}
+
 export function ImportadorPage() {
   const { isAuthenticated } = useAuth();
   const [copied, setCopied] = useState(false);
@@ -58,7 +67,8 @@ export function ImportadorPage() {
         </div>
       </div>
 
-      <section className="importador-card">
+      <section className="importador-card importador-step">
+        <div className="importador-step-body">
         <h2>1. Crie o favorito (só uma vez)</h2>
 
         <div className="importador-tabs" role="tablist" aria-label="Dispositivo">
@@ -124,9 +134,12 @@ export function ImportadorPage() {
             {copied ? 'Copiado!' : 'Copiar favorito'}
           </button>
         </div>
+        </div>
+        <StepVideo src="/videos/arrastando.mp4" label="Arrastando o botão para a barra de favoritos" />
       </section>
 
-      <section className="importador-card importador-card--highlight">
+      <section className="importador-card importador-card--highlight importador-step">
+        <div className="importador-step-body">
         <h2>2. Use no site de cifras</h2>
         <p className="muted">
           Abra a música no Cifra Club ou no Cifras.com.br e clique no favorito{' '}
@@ -145,6 +158,8 @@ export function ImportadorPage() {
             </Link>
           ) : null}
         </div>
+        </div>
+        <StepVideo src="/videos/capturando.mp4" label="Capturando uma cifra com o favorito" />
       </section>
 
       <details className="importador-more">
