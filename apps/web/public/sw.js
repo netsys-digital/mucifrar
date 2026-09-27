@@ -1,5 +1,5 @@
 /* Chord Seven — service worker mínimo (shell offline). */
-const CACHE = 'chordseven-shell-v1';
+const CACHE = 'chordseven-shell-v2';
 const PRECACHE = ['/', '/importador', '/manifest.webmanifest', '/logo.png', '/favicon.png'];
 
 self.addEventListener('install', (event) => {

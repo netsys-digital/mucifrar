@@ -50,7 +50,7 @@ export function PwaInstallButton({ className = 'btn btn-primary' }: { className?
   if (installed) {
     return (
       <p className="ok-text" role="status">
-        Importador instalado neste dispositivo.
+        Captura de cifras instalada neste dispositivo.
       </p>
     );
   }
@@ -58,7 +58,7 @@ export function PwaInstallButton({ className = 'btn btn-primary' }: { className?
   if (deferred) {
     return (
       <button type="button" className={className} onClick={() => void onInstall()}>
-        Baixar Importador de cifra
+        Instalar Captura de cifras
       </button>
     );
   }

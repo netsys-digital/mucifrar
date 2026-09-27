@@ -25,7 +25,7 @@ export function AppShell() {
             Playlists
           </NavLink>
           <NavLink to="/importador" className="nav-link">
-            Importador
+            Captura de cifras
           </NavLink>
           {isAuthenticated ? (
             <>

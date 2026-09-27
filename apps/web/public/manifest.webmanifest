@@ -1,7 +1,7 @@
 {
-  "name": "Importador de cifra — Chord Seven",
-  "short_name": "Importador cifra",
-  "description": "Importe cifras do Cifra Club no seu dispositivo e envie ao Chord Seven.",
+  "name": "Captura de cifras — Chord Seven",
+  "short_name": "Captura de cifras",
+  "description": "Capture cifras do Cifra Club no seu dispositivo e envie ao Chord Seven.",
   "start_url": "/importador",
   "scope": "/",
   "display": "standalone",

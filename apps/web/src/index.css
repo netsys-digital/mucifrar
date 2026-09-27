@@ -883,6 +883,26 @@ button.portal-shortcut {
   background: rgba(255, 255, 255, 0.5);
 }
 
+@media (min-width: 1240px) {
+  .cifra-view {
+    margin-inline: calc(50% - min(720px, 50vw - 1rem));
+  }
+}
+
+/* A barra de ferramentas define a largura; os demais blocos não contribuem (contain). */
+@media screen and (min-width: 769px) {
+  .cifra-view {
+    display: grid;
+    grid-template-columns: minmax(0, max-content);
+    justify-content: center;
+  }
+
+  .cifra-view > :not(.cifra-stage),
+  .cifra-stage > :not(.cifra-toolbar) {
+    contain: inline-size;
+  }
+}
+
 .cifra-view-head {
   display: flex;
   justify-content: space-between;
@@ -936,6 +956,16 @@ button.portal-shortcut {
   display: none;
 }
 
+.cifra-fs-btn {
+  box-shadow: 0 4px 12px rgba(22, 42, 78, 0.22);
+}
+
+.cifra-fs-btn.is-active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--navy-deep);
+}
+
 .cifra-toolbar-scroll {
   gap: 0.45rem;
 }
@@ -983,7 +1013,28 @@ button.portal-shortcut {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(22, 42, 78, 0.03);
+}
+.cifra-stage--dark .cifra-toolbar-group {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@media (min-width: 769px) {
+  .cifra-toolbar {
+    justify-content: flex-start;
+    gap: 0.4rem;
+    padding: 0.5rem 0.6rem;
+  }
+
+  .cifra-toolbar-primary,
+  .cifra-toolbar-more {
+    display: contents;
+  }
 }
 
 .btn-icon {
@@ -1189,11 +1240,6 @@ button.portal-shortcut {
   accent-color: var(--accent);
 }
 
-.cifra-shortcuts {
-  font-size: 0.75rem;
-  margin-left: auto;
-}
-
 .cifra-skeleton {
   display: grid;
   gap: 0.75rem;
@@ -1266,10 +1312,6 @@ button.portal-shortcut {
 .cifra-stage--dark .cifra-toolbar-label,
 .cifra-stage--dark .muted,
 .cifra-stage--dark .cifra-speed,
-.cifra-stage--dark .cifra-shortcuts {
-  color: rgba(232, 238, 245, 0.65);
-}
-
 .cifra-stage--dark .cifra-sheet {
   background: var(--sheet-bg);
   color: var(--sheet-ink);
@@ -1814,12 +1856,6 @@ html.cifra-fs-active body {
     width: 4.5rem;
   }
 
-  .cifra-shortcuts {
-    width: 100%;
-    font-size: 0.72rem;
-    line-height: 1.35;
-  }
-
   .cifra-stage--dark .cifra-toolbar-more {
     border-top-color: rgba(255, 255, 255, 0.12);
   }
@@ -1837,6 +1873,11 @@ html.cifra-fs-active body {
     position: sticky;
     top: 0.35rem;
     z-index: 6;
+  }
+
+  .cifra-mobile-bar-actions {
+    display: flex;
+    gap: 0.35rem;
   }
 
   .cifra-mobile-bar-key {
@@ -2204,6 +2245,28 @@ html.cifra-fs-active body {
 
 .bookmarklet-link {
   cursor: grab;
+}
+
+.importador-tabs {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.importador-more {
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.importador-more summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.importador-more[open] summary {
+  margin-bottom: 0.6rem;
 }
 
 .small-print {

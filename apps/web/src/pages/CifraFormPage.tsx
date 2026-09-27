@@ -31,7 +31,7 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const [loading, setLoading] = useState(mode === 'edit');
   const [importNote] = useState<string | null>(() =>
     mode === 'create' && Boolean(consumePendingImport()?.content)
-      ? 'Cifra trazida pelo Importador. Revise e salve quando estiver ok.'
+      ? 'Cifra trazida pela Captura de cifras. Revise e salve quando estiver ok.'
       : null,
   );
 
@@ -102,9 +102,9 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
       {mode === 'create' ? (
         <div className="enviar-import-grid">
           <div className="cifra-import enviar-import-card">
-            <h2>Já tenho o Importador</h2>
+            <h2>Já uso a Captura de cifras</h2>
             <p className="muted">
-              Abra a música no Cifra Club, use o favorito <strong>Importar p/ Chord Seven</strong> e
+              Abra a música no Cifra Club, use o favorito <strong>Capturar p/ Chord Seven</strong> e
               volte aqui com a cifra preenchida.
             </p>
             <a className="btn btn-gold" href="https://www.cifraclub.com.br/">

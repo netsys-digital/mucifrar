@@ -589,23 +589,23 @@ export function CifraPage() {
   return (
     <article className={`page cifra-view${mobilePanelOpen ? ' cifra-view--panel-open' : ''}`}>
       {!fullscreen ? (
-        <header className="cifra-view-head">
-          <div>
-            <p className="eyebrow">{cifra.artist}</p>
-            <h1>{cifra.title}</h1>
-            <p className="muted">
+      <header className="cifra-view-head">
+        <div>
+          <p className="eyebrow">{cifra.artist}</p>
+          <h1>{cifra.title}</h1>
+          <p className="muted">
               Tom original <strong>{cifra.key}</strong>
-              {cifra.authorName ? ` · por ${cifra.authorName}` : ''}
-              {` · ${cifra.views} visualizações`}
-            </p>
-          </div>
+            {cifra.authorName ? ` · por ${cifra.authorName}` : ''}
+            {` · ${cifra.views} visualizações`}
+          </p>
+        </div>
           <div className="cifra-view-actions print-hide">
             <AddToPlaylistButton cifraId={cifra.id} />
-            <Link to="/" className="btn btn-ghost">
-              ← Explorar
-            </Link>
+        <Link to="/" className="btn btn-ghost">
+          ← Explorar
+        </Link>
           </div>
-        </header>
+      </header>
       ) : null}
 
       <div className="cifra-print-meta" hidden>
@@ -669,6 +669,22 @@ export function CifraPage() {
           <span className="cifra-mobile-bar-key">
             Tom <strong>{displayKey}</strong>
           </span>
+          <div className="cifra-mobile-bar-actions">
+          <button
+            type="button"
+            className={`btn btn-primary btn-compact btn-icon cifra-fs-btn${fullscreen ? ' is-active' : ''}`}
+            aria-pressed={fullscreen}
+            aria-label={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+            onClick={toggleFullscreen}
+          >
+            <ToolIcon
+              d={
+                fullscreen
+                  ? 'M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6'
+                  : 'M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6'
+              }
+            />
+          </button>
           <button
             type="button"
             className={`btn btn-ghost btn-compact btn-icon${scrolling ? ' is-active' : ''}`}
@@ -687,6 +703,7 @@ export function CifraPage() {
               </svg>
             )}
           </button>
+          </div>
         </div>
 
         <div
@@ -753,39 +770,6 @@ export function CifraPage() {
                 onClick={() => bumpFont(0.05)}
               >
                 A+
-              </button>
-            </div>
-
-            <div className="cifra-toolbar-group">
-              <button
-                type="button"
-                className={`btn btn-ghost btn-compact btn-icon${fullscreen ? ' is-active' : ''}`}
-                aria-pressed={fullscreen}
-                aria-label={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
-                title={fullscreen ? 'Sair da tela cheia (F)' : 'Tela cheia (F)'}
-                onClick={toggleFullscreen}
-              >
-                {fullscreen ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
               </button>
             </div>
 
@@ -927,11 +911,23 @@ export function CifraPage() {
               >
                 <ToolIcon d="M5 4h14M12 20V9M6 14l6-6 6 6" />
               </button>
+              <button
+                type="button"
+                className={`btn btn-primary btn-compact btn-icon cifra-fs-btn${fullscreen ? ' is-active' : ''}`}
+                aria-pressed={fullscreen}
+                aria-label={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                title={fullscreen ? 'Sair da tela cheia (F)' : 'Tela cheia (F)'}
+                onClick={toggleFullscreen}
+              >
+                <ToolIcon
+                  d={
+                    fullscreen
+                      ? 'M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6'
+                      : 'M9 3H3v6M15 3h6v6M9 21H3v-6M15 21h6v-6'
+                  }
+                />
+              </button>
             </div>
-
-            <span className="cifra-shortcuts muted" title="Atalhos">
-              +/− tom · [ ] zoom · 1–4 colunas · F tela cheia · D escuro · Espaço scroll · P imprimir
-            </span>
           </div>
         </div>
 

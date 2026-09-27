@@ -4,16 +4,26 @@ import { PwaInstallButton } from '../components/PwaInstallButton';
 import { buildBookmarkletHref } from '../lib/importPayload';
 import { useAuth } from '../auth/AuthContext';
 
+type Device = 'pc' | 'mobile';
+
+const BOOKMARK_NAME = 'Capturar p/ Chord Seven';
+
+function detectDevice(): Device {
+  if (typeof window === 'undefined') return 'pc';
+  return window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'pc';
+}
+
 export function ImportadorPage() {
   const { isAuthenticated } = useAuth();
   const [copied, setCopied] = useState(false);
+  const [device, setDevice] = useState<Device>(detectDevice);
   const bookmarklet = useMemo(
     () => buildBookmarkletHref(typeof window !== 'undefined' ? window.location.origin : ''),
     [],
   );
 
   useEffect(() => {
-    document.title = 'Importador de cifra — Chord Seven';
+    document.title = 'Captura de cifras — Chord Seven';
     return () => {
       document.title = 'Chord Seven';
     };
@@ -34,7 +44,7 @@ export function ImportadorPage() {
     e.dataTransfer.setData('text/plain', bookmarklet);
     e.dataTransfer.setData(
       'text/html',
-      `<a href="${bookmarklet.replace(/"/g, '&quot;')}">Importar p/ Chord Seven</a>`,
+      `<a href="${bookmarklet.replace(/"/g, '&quot;')}">${BOOKMARK_NAME}</a>`,
     );
     e.dataTransfer.effectAllowed = 'copyLink';
   }
@@ -43,147 +53,113 @@ export function ImportadorPage() {
     <div className="page importador-page">
       <div className="section-head">
         <div>
-          <p className="eyebrow">Chord Seven</p>
-          <h1>Como trazer cifras do Cifra Club</h1>
-          <p className="muted">
-            O Chord Seven <strong>não busca</strong> a cifra sozinho no servidor. Você configura um
-            favorito no navegador <strong>uma vez</strong>; depois, em qualquer cifra do Cifra Club,
-            basta clicar nesse favorito e a música vem para cá já preenchida.
-          </p>
+          <h1>Captura de cifras</h1>
+          <p className="muted">Traga músicas do Cifra Club para o Chord Seven com um clique.</p>
         </div>
       </div>
 
-      <section className="importador-card importador-card--highlight">
-        <h2>Em poucas palavras</h2>
-        <ol className="importador-steps">
-          <li>Crie o favorito especial (passos abaixo).</li>
-          <li>Abra a música no site do Cifra Club.</li>
-          <li>Clique no favorito — a cifra abre no Chord Seven para você salvar.</li>
-        </ol>
-      </section>
-
       <section className="importador-card">
-        <h2>Passo 1 — Deixe o site à mão (opcional)</h2>
-        <p className="muted">
-          No celular, você pode adicionar esta página à tela inicial, como um ícone de aplicativo.
-          Assim fica mais fácil voltar nas instruções.
-        </p>
-        <PwaInstallButton className="btn btn-gold" />
-      </section>
+        <h2>1. Crie o favorito (só uma vez)</h2>
 
-      <section className="importador-card">
-        <h2>Passo 2 — Criar o favorito “Importar p/ Chord Seven”</h2>
-        <p className="muted">
-          Esse favorito é um atalho inteligente: ele lê a cifra na página do Cifra Club e traz para o
-          Chord Seven. Faça isso só uma vez.
-        </p>
-
-        <h3 className="importador-sub">No computador (Chrome)</h3>
-        <ol className="importador-steps">
-          <li>
-            Mostre a barra de favoritos: pressione <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd>
-            .
-          </li>
-          <li>
-            Clique em <strong>Copiar favorito</strong> abaixo (ou arraste o botão azul até a barra).
-          </li>
-          <li>
-            Menu ⋮ → Favoritos → <strong>Gerenciador de favoritos</strong> → adicionar favorito.
-          </li>
-          <li>
-            Nome: <strong>Importar p/ Chord Seven</strong>
-          </li>
-          <li>
-            No campo da <strong>URL</strong>, apague tudo e <strong>cole</strong> o que foi
-            copiado. Tem que começar com <code>javascript:</code>.
-          </li>
-          <li>Salve. O favorito deve aparecer na barra.</li>
-        </ol>
-
-        <h3 className="importador-sub">No celular (Chrome Android)</h3>
-        <ol className="importador-steps">
-          <li>
-            Toque em <strong>Copiar favorito</strong> abaixo.
-          </li>
-          <li>
-            Toque na estrela (ou ⋮ → <strong>Adicionar aos favoritos</strong>).
-          </li>
-          <li>
-            Edite o favorito: nome <strong>Importar p/ Chord Seven</strong>.
-          </li>
-          <li>
-            No campo do endereço/URL, apague o que estiver lá e <strong>cole</strong> o código
-            copiado.
-          </li>
-          <li>Salve.</li>
-        </ol>
-
-        <div className="importador-actions">
+        <div className="importador-tabs" role="tablist" aria-label="Dispositivo">
           <button
             type="button"
-            className="btn btn-primary bookmarklet-link"
-            draggable
-            onDragStart={onBookmarkDragStart}
-            title="Arraste para a barra de favoritos (computador)"
+            role="tab"
+            aria-selected={device === 'pc'}
+            className={`portal-sort-tab${device === 'pc' ? ' is-active' : ''}`}
+            onClick={() => setDevice('pc')}
           >
-            Importar p/ Chord Seven
+            Computador
           </button>
-          <button type="button" className="btn btn-ghost" onClick={() => void copyBookmarklet()}>
-            {copied ? 'Copiado! Agora cole no favorito' : 'Copiar favorito'}
+          <button
+            type="button"
+            role="tab"
+            aria-selected={device === 'mobile'}
+            className={`portal-sort-tab${device === 'mobile' ? ' is-active' : ''}`}
+            onClick={() => setDevice('mobile')}
+          >
+            Celular
           </button>
         </div>
-        <p className="muted small-print">
-          Se o favorito mostrar erro falando de “React”, apague-o e crie de novo com{' '}
-          <strong>Copiar favorito</strong>.
-        </p>
+
+        {device === 'pc' ? (
+          <ol className="importador-steps">
+            <li>
+              Aperte <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>B</kbd> para mostrar a barra de
+              favoritos.
+            </li>
+            <li>
+              <strong>Arraste</strong> o botão azul abaixo até essa barra.
+            </li>
+          </ol>
+        ) : (
+          <ol className="importador-steps">
+            <li>
+              Toque em <strong>Copiar favorito</strong>.
+            </li>
+            <li>
+              Adicione esta página aos favoritos (estrela) e edite: nome{' '}
+              <strong>{BOOKMARK_NAME}</strong>, e no endereço <strong>cole</strong> o que copiou.
+            </li>
+          </ol>
+        )}
+
+        <div className="importador-actions">
+          {device === 'pc' ? (
+            <button
+              type="button"
+              className="btn btn-primary bookmarklet-link"
+              draggable
+              onDragStart={onBookmarkDragStart}
+              title="Arraste para a barra de favoritos"
+            >
+              {BOOKMARK_NAME}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={device === 'pc' ? 'btn btn-ghost' : 'btn btn-primary'}
+            onClick={() => void copyBookmarklet()}
+          >
+            {copied ? 'Copiado!' : 'Copiar favorito'}
+          </button>
+        </div>
       </section>
 
-      <section className="importador-card">
-        <h2>Passo 3 — Usar no dia a dia</h2>
-        <ol className="importador-steps">
-          <li>
-            Abra a cifra no{' '}
-            <a href="https://www.cifraclub.com.br/">
-              Cifra Club
-            </a>{' '}
-            (página da música).
-          </li>
-          <li>
-            Clique no favorito <strong>Importar p/ Chord Seven</strong>.
-          </li>
-          <li>
-            Você volta ao Chord Seven com título, artista, tom e cifra preenchidos — revise e
-            salve.
-          </li>
-        </ol>
+      <section className="importador-card importador-card--highlight">
+        <h2>2. Use no Cifra Club</h2>
+        <p className="muted">
+          Abra a música no Cifra Club e clique no favorito <strong>{BOOKMARK_NAME}</strong>. A cifra
+          chega aqui preenchida — é só revisar e salvar.
+        </p>
         <div className="importador-actions">
           <a className="btn btn-gold" href="https://www.cifraclub.com.br/">
             Abrir Cifra Club
           </a>
-          {isAuthenticated ? (
-            <Link to="/enviar" className="btn btn-ghost">
-              Ir para Enviar cifra
-            </Link>
-          ) : (
+          {!isAuthenticated ? (
             <Link to="/entrar" state={{ from: '/enviar' }} className="btn btn-ghost">
               Entrar para salvar
             </Link>
-          )}
+          ) : null}
         </div>
       </section>
 
-      <section className="importador-card">
-        <h2>Não quer usar o favorito?</h2>
-        <p className="muted">
-          Sem problema: na página <strong>Enviar cifra</strong> você pode digitar ou colar a cifra
-          manualmente nos campos do formulário.
-        </p>
-        {isAuthenticated ? (
-          <Link to="/enviar" className="btn btn-ghost">
-            Preencher na mão
-          </Link>
-        ) : null}
-      </section>
+      <details className="importador-more">
+        <summary>Dúvidas e outras opções</summary>
+        <ul className="importador-steps">
+          <li>
+            Se o favorito mostrar erro, apague-o e crie de novo com <strong>Copiar favorito</strong>.
+          </li>
+          <li>
+            Prefere sem favorito?{' '}
+            {isAuthenticated ? <Link to="/enviar">Cole a cifra manualmente</Link> : 'Cole a cifra manualmente'}{' '}
+            na página Enviar cifra.
+          </li>
+          <li>
+            Quer um ícone na tela inicial do celular? <PwaInstallButton className="btn btn-ghost btn-compact" />
+          </li>
+        </ul>
+      </details>
     </div>
   );
 }

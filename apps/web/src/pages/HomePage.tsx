@@ -291,9 +291,9 @@ export function HomePage() {
                 1
               </span>
               <div>
-                <strong>Importe do Cifra Club</strong>
-                <p>Cole o link e revise a cifra em segundos.</p>
-                <Link to={isAuthenticated ? '/enviar' : '/entrar'}>Enviar cifra →</Link>
+                <strong>Captura de cifras</strong>
+                <p>Traga cifras do Cifra Club com um clique e revise antes de salvar.</p>
+                <Link to="/importador">Como configurar →</Link>
               </div>
             </li>
             <li>
