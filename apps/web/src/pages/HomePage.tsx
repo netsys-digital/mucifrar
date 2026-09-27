@@ -5,8 +5,7 @@ import { CifraCard } from '../components/CifraCard';
 import { PlaylistCard } from '../components/PlaylistCard';
 import { useAuth } from '../auth/AuthContext';
 
-const HERO_IMAGE =
-  'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1800&q=80';
+const HERO_IMAGE = '/fundo-hero.jpg';
 
 export function HomePage() {
   const [params, setParams] = useSearchParams();
