@@ -54,7 +54,7 @@ export function ImportadorPage() {
       <div className="section-head">
         <div>
           <h1>Captura de cifras</h1>
-          <p className="muted">Traga músicas do Cifra Club para o Chord Seven com um clique.</p>
+          <p className="muted">Traga músicas do Cifra Club ou do Cifras.com.br para o Chord Seven com um clique.</p>
         </div>
       </div>
 
@@ -127,14 +127,17 @@ export function ImportadorPage() {
       </section>
 
       <section className="importador-card importador-card--highlight">
-        <h2>2. Use no Cifra Club</h2>
+        <h2>2. Use no site de cifras</h2>
         <p className="muted">
-          Abra a música no Cifra Club e clique no favorito <strong>{BOOKMARK_NAME}</strong>. A cifra
-          chega aqui preenchida — é só revisar e salvar.
+          Abra a música no Cifra Club ou no Cifras.com.br e clique no favorito{' '}
+          <strong>{BOOKMARK_NAME}</strong>. A cifra chega aqui preenchida — é só revisar e salvar.
         </p>
         <div className="importador-actions">
           <a className="btn btn-gold" href="https://www.cifraclub.com.br/">
             Abrir Cifra Club
+          </a>
+          <a className="btn btn-ghost" href="https://www.cifras.com.br/">
+            Abrir Cifras.com.br
           </a>
           {!isAuthenticated ? (
             <Link to="/entrar" state={{ from: '/enviar' }} className="btn btn-ghost">

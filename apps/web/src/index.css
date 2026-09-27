@@ -1587,6 +1587,32 @@ html.cifra-fs-active body {
   width: fit-content;
 }
 
+.enviar-search {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.enviar-search input {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  color: var(--ink);
+}
+
+.enviar-search input:focus {
+  outline: 2px solid var(--gold-soft);
+  border-color: var(--gold);
+}
+
+.enviar-search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .enviar-import-card--side {
   background: #fff;
   border-style: solid;

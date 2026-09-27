@@ -11,6 +11,21 @@ const EMPTY = {
   status: 'DRAFT' as 'DRAFT' | 'PUBLISHED',
 };
 
+const CIFRA_SITES = [
+  {
+    name: 'Cifra Club',
+    home: 'https://www.cifraclub.com.br/',
+    search: (q: string) => `https://www.cifraclub.com.br/?q=${encodeURIComponent(q)}`,
+    primary: true,
+  },
+  {
+    name: 'Cifras.com.br',
+    home: 'https://www.cifras.com.br/',
+    search: (q: string) => `https://www.cifras.com.br/busca?q=${encodeURIComponent(q)}`,
+    primary: false,
+  },
+];
+
 export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const { id = '' } = useParams();
   const navigate = useNavigate();
@@ -28,6 +43,7 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
   });
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [siteQuery, setSiteQuery] = useState('');
   const [loading, setLoading] = useState(mode === 'edit');
   const [importNote] = useState<string | null>(() =>
     mode === 'create' && Boolean(consumePendingImport()?.content)
@@ -104,12 +120,33 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
           <div className="cifra-import enviar-import-card">
             <h2>Já uso a Captura de cifras</h2>
             <p className="muted">
-              Abra a música no Cifra Club, use o favorito <strong>Capturar p/ Chord Seven</strong> e
-              volte aqui com a cifra preenchida.
+              Busque a música em um dos sites, use o favorito{' '}
+              <strong>Capturar p/ Chord Seven</strong> e volte aqui com a cifra preenchida.
             </p>
-            <a className="btn btn-gold" href="https://www.cifraclub.com.br/">
-              Abrir Cifra Club
-            </a>
+            <form className="enviar-search" onSubmit={(e) => e.preventDefault()}>
+              <input
+                type="search"
+                placeholder="Nome da música ou artista"
+                value={siteQuery}
+                onChange={(e) => setSiteQuery(e.target.value)}
+                aria-label="Buscar música nos sites de cifra"
+              />
+              <div className="enviar-search-actions">
+                {CIFRA_SITES.map((site) => (
+                  <button
+                    key={site.name}
+                    type="submit"
+                    className={site.primary ? 'btn btn-gold' : 'btn btn-ghost'}
+                    onClick={() => {
+                      const q = siteQuery.trim();
+                      window.location.href = q ? site.search(q) : site.home;
+                    }}
+                  >
+                    {siteQuery.trim() ? `Buscar no ${site.name}` : `Abrir ${site.name}`}
+                  </button>
+                ))}
+              </div>
+            </form>
             {importNote ? <p className="ok-text">{importNote}</p> : null}
           </div>
 

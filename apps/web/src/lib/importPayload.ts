@@ -70,10 +70,10 @@ export function buildBookmarkletHref(appOrigin: string): string {
   function clean(s){return String(s||'').replace(/\\u00a0/g,' ').replace(/[ \\t]+$/gm,'').replace(/\\n{3,}/g,'\\n\\n').trim()}
   var pres=[].slice.call(document.querySelectorAll('pre'));
   var pre=document.querySelector('pre.js-tab-content,pre.cifra,pre[class*="cifra"]')||pres.sort(function(a,b){return (b.textContent||'').length-(a.textContent||'').length})[0];
-  if(!pre||clean(pre.innerText).length<20){alert('Não achei a cifra nesta página. Abra uma cifra no Cifra Club (página da música ou imprimir).');return}
+  if(!pre||clean(pre.innerText).length<20){alert('Não achei a cifra nesta página. Abra a página da música no Cifra Club ou no Cifras.com.br.');return}
   var title='',artist='';
   var pageTitle=(document.title||'').replace(/\\s+/g,' ').trim();
-  var parts=pageTitle.split(' - ').map(function(p){return p.trim()}).filter(Boolean).filter(function(p){return !/^cifra club$/i.test(p)});
+  var parts=pageTitle.split(' - ').map(function(p){return p.trim()}).filter(Boolean).filter(function(p){return !/^(cifra club|cifras?)$/i.test(p)&&!/^cifra\\s*(para|de)\\b/i.test(p)});
   if(parts.length>=2){title=parts[0];artist=parts.slice(1).join(' - ')}
   else if(parts.length===1){title=parts[0]}
   var h1=document.querySelector('h1');
