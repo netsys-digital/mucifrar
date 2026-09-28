@@ -1,9 +1,11 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { GlobalLoader, useGlobalLoading } from './GlobalLoader';
 
 export function AppShell() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+  const loading = useGlobalLoading();
 
   async function handleLogout() {
     await logout();
@@ -65,7 +67,9 @@ export function AppShell() {
         </div>
       </header>
 
-      <main className="main">
+      <GlobalLoader visible={loading} />
+
+      <main className={`main${loading ? ' is-loading' : ''}`}>
         <Outlet />
       </main>
 

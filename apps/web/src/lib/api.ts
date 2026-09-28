@@ -1,3 +1,5 @@
+import { beginLoading, endLoading } from './loading';
+
 const ACCESS_KEY = 'mucifrar_access';
 const REFRESH_KEY = 'mucifrar_refresh';
 const USER_KEY = 'mucifrar_user';
@@ -78,6 +80,15 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
+  beginLoading();
+  try {
+    return await request<T>(path, options, retry);
+  } finally {
+    endLoading();
+  }
+}
+
+async function request<T>(path: string, options: RequestInit, retry: boolean): Promise<T> {
   const headers = new Headers(options.headers);
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json');
@@ -93,7 +104,7 @@ export async function api<T>(path: string, options: RequestInit = {}, retry = tr
       refreshPromise = null;
     });
     const ok = await refreshPromise;
-    if (ok) return api<T>(path, options, false);
+    if (ok) return request<T>(path, options, false);
   }
 
   if (res.status === 204) return undefined as T;
