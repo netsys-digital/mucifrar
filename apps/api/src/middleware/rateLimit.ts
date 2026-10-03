@@ -52,6 +52,16 @@ export const publicRateLimit = rateLimit({
   keyGenerator: ipKey,
 });
 
+/** Tom ao vivo: a banda inteira pode estar no mesmo IP e clicar o tom várias vezes. */
+export const playlistLiveRateLimit = rateLimit({
+  windowMs,
+  max: 2000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: rateLimitMessage,
+  keyGenerator: ipKey,
+});
+
 export function shouldSkipGlobalApiRateLimit(path: string): boolean {
   return (
     path === '/health' ||

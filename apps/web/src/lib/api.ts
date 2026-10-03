@@ -88,7 +88,8 @@ export async function api<T>(path: string, options: RequestInit = {}, retry = tr
   }
 }
 
-async function request<T>(path: string, options: RequestInit, retry: boolean): Promise<T> {
+/** Fetch autenticado sem o indicador global — usado pelo tom ao vivo da playlist. */
+export async function apiFetch(path: string, options: RequestInit = {}, retry = true): Promise<Response> {
   const headers = new Headers(options.headers);
   if (!headers.has('Content-Type') && options.body) {
     headers.set('Content-Type', 'application/json');
@@ -104,8 +105,14 @@ async function request<T>(path: string, options: RequestInit, retry: boolean): P
       refreshPromise = null;
     });
     const ok = await refreshPromise;
-    if (ok) return request<T>(path, options, false);
+    if (ok) return apiFetch(path, options, false);
   }
+
+  return res;
+}
+
+async function request<T>(path: string, options: RequestInit, retry: boolean): Promise<T> {
+  const res = await apiFetch(path, options, retry);
 
   if (res.status === 204) return undefined as T;
 
@@ -161,6 +168,7 @@ export type PlaylistItem = {
   id: string;
   position: number;
   cifraId: string;
+  semitones: number;
   cifra: PlaylistCifraSummary;
   createdAt: string;
 };

@@ -11,6 +11,7 @@ import { useAuth } from '../auth/AuthContext';
 import { AddToPlaylistButton } from '../components/AddToPlaylistButton';
 import { api, type Cifra, type Playlist } from '../lib/api';
 import { cifraFromPlaylistHref } from '../lib/playlistNav';
+import { savePlaylistItemTom, usePlaylistTomEvents } from '../lib/playlistLive';
 import {
   clampColumns,
   clampFontScale,
@@ -143,6 +144,7 @@ export function CifraPage() {
 
   const playlistSlugParam = searchParams.get('playlist');
   const playlistIdParam = searchParams.get('playlistId');
+  const inPlaylist = Boolean(playlistSlugParam || playlistIdParam);
 
   const initialView = useMemo(() => loadViewPrefs(), []);
   const [cifra, setCifra] = useState<Cifra | null>(null);
@@ -160,12 +162,24 @@ export function CifraPage() {
   const [shareNote, setShareNote] = useState<string | null>(null);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [versionLoaded, setVersionLoaded] = useState(false);
+  const [playlistStatus, setPlaylistStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [tomSyncError, setTomSyncError] = useState<string | null>(null);
   const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const scrollRaf = useRef<number | null>(null);
+  const appliedTomToken = useRef<string | null>(null);
+  const suppressTomPush = useRef(false);
+  const semitonesRef = useRef(0);
+  const pushSeq = useRef(0);
+  const seenSlug = useRef(slug);
+  semitonesRef.current = semitones;
+  if (seenSlug.current !== slug) {
+    seenSlug.current = slug;
+    if (inPlaylist) setVersionLoaded(false);
+  }
 
   const maxColumns: ColumnCount = fullscreen ? 4 : 2;
   const columnOptions = (fullscreen ? [1, 2, 3, 4] : [1, 2]) as ColumnCount[];
@@ -190,7 +204,7 @@ export function CifraPage() {
         let nextSemis = tomQ ?? 0;
         let nextCapo = capoQ != null && /^\d+$/.test(capoQ) ? Math.min(12, Number(capoQ)) : 0;
 
-        if (tomQ == null && capoQ == null) {
+        const loadSaved = async () => {
           let saved = loadVersionPrefs(slug, user?.id);
           if (isAuthenticated) {
             try {
@@ -202,6 +216,24 @@ export function CifraPage() {
               /* sem preferência remota */
             }
           }
+          return saved;
+        };
+
+        if (inPlaylist) {
+          if (capoQ == null) {
+            const saved = await loadSaved();
+            if (saved) nextCapo = Math.min(12, Math.max(0, saved.capo));
+          }
+          if (!cancelled) {
+            setCapo(nextCapo);
+            suppressTomPush.current = true;
+            setSemitones(0);
+          }
+          return;
+        }
+
+        if (tomQ == null && capoQ == null) {
+          const saved = await loadSaved();
           if (saved) {
             nextSemis = normalizeSemitones(saved.semitones);
             nextCapo = Math.min(12, Math.max(0, saved.capo));
@@ -224,9 +256,9 @@ export function CifraPage() {
     return () => {
       cancelled = true;
     };
-    // URL params lidos só no load da cifra
+    // tom/capo da URL só no load da cifra; o tom da playlist entra depois
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, isAuthenticated, user?.id]);
+  }, [slug, isAuthenticated, user?.id, inPlaylist]);
 
   useEffect(() => {
     setMobileToolsOpen(false);
@@ -236,9 +268,11 @@ export function CifraPage() {
   useEffect(() => {
     if (!playlistSlugParam && !playlistIdParam) {
       setPlaylistCtx(null);
+      setPlaylistStatus('idle');
       return;
     }
     let cancelled = false;
+    setPlaylistStatus('loading');
     const load = async () => {
       try {
         let pl: Playlist | null = null;
@@ -254,9 +288,15 @@ export function CifraPage() {
             `/api/publico/playlists/${encodeURIComponent(playlistSlugParam)}`,
           );
         }
-        if (!cancelled) setPlaylistCtx(pl);
+        if (!cancelled) {
+          setPlaylistCtx(pl);
+          setPlaylistStatus(pl ? 'ready' : 'error');
+        }
       } catch {
-        if (!cancelled) setPlaylistCtx(null);
+        if (!cancelled) {
+          setPlaylistCtx(null);
+          setPlaylistStatus('error');
+        }
       }
     };
     void load();
@@ -264,6 +304,82 @@ export function CifraPage() {
       cancelled = true;
     };
   }, [playlistSlugParam, playlistIdParam, isAuthenticated]);
+
+  useEffect(() => {
+    if (!inPlaylist || !cifra || cifra.slug !== slug) return;
+    if (playlistStatus === 'idle' || playlistStatus === 'loading') return;
+
+    if (playlistStatus === 'error' || !playlistCtx) {
+      const token = `missing:${slug}`;
+      if (appliedTomToken.current === token) return;
+      appliedTomToken.current = token;
+      suppressTomPush.current = true;
+      setSemitones(0);
+      setVersionLoaded(true);
+      return;
+    }
+
+    const token = `${playlistCtx.id}:${slug}`;
+    if (appliedTomToken.current === token) return;
+    appliedTomToken.current = token;
+    const item = playlistCtx.items?.find((entry) => entry.cifra.slug === slug);
+    suppressTomPush.current = true;
+    setSemitones(normalizeSemitones(item?.semitones ?? 0));
+    setVersionLoaded(true);
+  }, [inPlaylist, cifra, slug, playlistStatus, playlistCtx]);
+
+  const livePlaylist = useMemo(() => {
+    if (!inPlaylist || !playlistCtx) return null;
+    return {
+      id: playlistCtx.id,
+      slug: playlistCtx.slug,
+      visibility: playlistCtx.visibility,
+    };
+  }, [inPlaylist, playlistCtx?.id, playlistCtx?.slug, playlistCtx?.visibility]);
+
+  const playlistItemId = useMemo(
+    () => playlistCtx?.items?.find((entry) => entry.cifra.slug === slug)?.id ?? null,
+    [playlistCtx, slug],
+  );
+
+  usePlaylistTomEvents(livePlaylist, (event) => {
+    setPlaylistCtx((current) => {
+      if (!current?.items?.some((item) => item.id === event.itemId)) return current;
+      return {
+        ...current,
+        items: current.items.map((item) =>
+          item.id === event.itemId ? { ...item, semitones: event.semitones } : item,
+        ),
+      };
+    });
+    if (event.cifraSlug !== slug) return;
+    const next = normalizeSemitones(event.semitones);
+    if (semitonesRef.current === next) return;
+    suppressTomPush.current = true;
+    setSemitones(next);
+  });
+
+  useEffect(() => {
+    if (!versionLoaded || !livePlaylist || !playlistItemId) return;
+    if (suppressTomPush.current) {
+      suppressTomPush.current = false;
+      return;
+    }
+    const seq = ++pushSeq.current;
+    const value = semitones;
+    const timer = window.setTimeout(() => {
+      void savePlaylistItemTom(livePlaylist, playlistItemId, value)
+        .then(() => {
+          if (seq === pushSeq.current) setTomSyncError(null);
+        })
+        .catch(() => {
+          if (seq === pushSeq.current) {
+            setTomSyncError('Não foi possível sincronizar o tom com a playlist');
+          }
+        });
+    }, 200);
+    return () => window.clearTimeout(timer);
+  }, [semitones, versionLoaded, livePlaylist, playlistItemId]);
 
   useEffect(() => {
     if (columnCount > maxColumns) setColumnCount(maxColumns);
@@ -544,7 +660,11 @@ export function CifraPage() {
     return () => document.removeEventListener('keydown', onKey);
   }, [playlistNav, navigate]);
 
-  if (loading) {
+  const onSharedPlaylist = Boolean(
+    playlistCtx?.items?.some((entry) => entry.cifra.slug === slug),
+  );
+
+  if (loading || (!error && inPlaylist && !versionLoaded)) {
     return (
       <div className="page cifra-view">
         <div className="cifra-skeleton" aria-busy="true" aria-label="Carregando cifra">
@@ -594,7 +714,21 @@ export function CifraPage() {
           <p className="eyebrow">{cifra.artist}</p>
           <h1>{cifra.title}</h1>
           <p className="muted">
-              Tom original <strong>{cifra.key}</strong>
+            {onSharedPlaylist ? (
+              <>
+                Tom da playlist <strong>{displayKey}</strong>
+                {semitones !== 0 ? (
+                  <>
+                    {' '}
+                    · cifra em <strong>{cifra.key}</strong>
+                  </>
+                ) : null}
+              </>
+            ) : (
+              <>
+                Tom original <strong>{cifra.key}</strong>
+              </>
+            )}
             {cifra.authorName ? ` · por ${cifra.authorName}` : ''}
             {` · ${cifra.views} visualizações`}
           </p>
@@ -648,6 +782,12 @@ export function CifraPage() {
               )}
             </div>
           </nav>
+        ) : null}
+
+        {onSharedPlaylist ? (
+          <p className="playlist-tom-note print-hide">
+            Tom desta playlist, ao vivo para quem está aqui. Fora dela, a cifra segue no tom original.
+          </p>
         ) : null}
 
         <div className="cifra-mobile-bar print-hide">
@@ -934,6 +1074,7 @@ export function CifraPage() {
         {(shareNote || saveNote) && (
           <p className="ok-text print-hide">{shareNote ?? saveNote}</p>
         )}
+        {tomSyncError ? <p className="error-text print-hide">{tomSyncError}</p> : null}
 
         {uniqueChords.length > 0 ? (
           <div className="cifra-chord-list print-hide" aria-label="Acordes usados">

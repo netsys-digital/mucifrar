@@ -1,6 +1,7 @@
 import type { Cifra, Playlist, PlaylistItem, Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../lib/errors.js';
+import { publishPlaylistTom, type PlaylistTomEvent } from './live.js';
 
 function slugify(input: string): string {
   return input
@@ -64,6 +65,7 @@ function publicPlaylist(
       id: item.id,
       position: item.position,
       cifraId: item.cifraId,
+      semitones: item.semitones,
       cifra: publicCifraSummary(item.cifra),
       createdAt: item.createdAt,
     })),
@@ -281,6 +283,63 @@ export async function removeItem(ownerId: string, playlistId: string, itemId: st
   );
 
   return getMineById(ownerId, playlistId);
+}
+
+function normalizeSemitones(n: number): number {
+  const m = ((n % 12) + 12) % 12;
+  return m > 6 ? m - 12 : m;
+}
+
+export async function getPublicPlaylistId(slug: string) {
+  const playlist = await prisma.playlist.findFirst({
+    where: { slug, visibility: 'PUBLIC' },
+    select: { id: true },
+  });
+  if (!playlist) throw new AppError(404, 'Playlist não encontrada');
+  return playlist.id;
+}
+
+export async function assertOwner(ownerId: string, playlistId: string) {
+  const playlist = await prisma.playlist.findFirst({
+    where: { id: playlistId, ownerId },
+    select: { id: true },
+  });
+  if (!playlist) throw new AppError(404, 'Playlist não encontrada');
+}
+
+export async function setItemSemitones(
+  playlistId: string,
+  itemId: string,
+  semitones: number,
+): Promise<PlaylistTomEvent> {
+  const item = await prisma.playlistItem.findFirst({
+    where: { id: itemId, playlistId },
+    include: { cifra: { select: { id: true, slug: true } } },
+  });
+  if (!item) throw new AppError(404, 'Item não encontrado na playlist');
+
+  const normalized = normalizeSemitones(semitones);
+  if (item.semitones !== normalized) {
+    await prisma.playlistItem.update({
+      where: { id: item.id },
+      data: { semitones: normalized },
+    });
+    const event: PlaylistTomEvent = {
+      itemId: item.id,
+      cifraId: item.cifra.id,
+      cifraSlug: item.cifra.slug,
+      semitones: normalized,
+    };
+    publishPlaylistTom(playlistId, event);
+    return event;
+  }
+
+  return {
+    itemId: item.id,
+    cifraId: item.cifra.id,
+    cifraSlug: item.cifra.slug,
+    semitones: normalized,
+  };
 }
 
 export async function reorderItems(ownerId: string, playlistId: string, itemIds: string[]) {

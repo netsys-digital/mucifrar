@@ -21,3 +21,7 @@ export const addPlaylistItemSchema = z.object({
 export const reorderPlaylistItemsSchema = z.object({
   itemIds: z.array(z.string().min(1)).min(1),
 });
+
+export const setPlaylistTomSchema = z.object({
+  semitones: z.number().int().min(-11).max(11),
+});

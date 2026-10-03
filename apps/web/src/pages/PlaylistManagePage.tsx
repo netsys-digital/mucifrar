@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, type Playlist } from '../lib/api';
+import { describePlaylistKey, usePlaylistTomEvents } from '../lib/playlistLive';
 
 export function PlaylistManagePage() {
   const { id = '' } = useParams();
@@ -16,6 +17,7 @@ export function PlaylistManagePage() {
 
   async function load() {
     setLoading(true);
+    setPlaylist(null);
     setError(null);
     try {
       const res = await api<Playlist>(`/api/playlists/${id}`);
@@ -33,6 +35,18 @@ export function PlaylistManagePage() {
   useEffect(() => {
     void load();
   }, [id]);
+
+  usePlaylistTomEvents(playlist, (event) => {
+    setPlaylist((current) => {
+      if (!current?.items?.some((item) => item.id === event.itemId)) return current;
+      return {
+        ...current,
+        items: current.items.map((item) =>
+          item.id === event.itemId ? { ...item, semitones: event.semitones } : item,
+        ),
+      };
+    });
+  });
 
   async function onSave(e: FormEvent) {
     e.preventDefault();
@@ -164,7 +178,8 @@ export function PlaylistManagePage() {
           <div>
             <h2>Cifras na playlist</h2>
             <p className="muted">
-              Use as setas ↑ ↓ para definir a ordem. Essa ordem vale na navegação ao tocar.
+              Use as setas ↑ ↓ para definir a ordem. O tom alterado numa cifra desta playlist
+              aparece aqui na hora e só vale dentro dela.
             </p>
           </div>
           <p className="muted">{items.length} item{items.length === 1 ? '' : 's'}</p>
@@ -179,7 +194,9 @@ export function PlaylistManagePage() {
           </div>
         ) : (
           <ol className="playlist-tracklist">
-            {items.map((item, index) => (
+            {items.map((item, index) => {
+              const keyInfo = describePlaylistKey(item.cifra.key, item.semitones);
+              return (
               <li key={item.id} className="playlist-track">
                 <div className="playlist-order-controls">
                   <button
@@ -212,7 +229,11 @@ export function PlaylistManagePage() {
                     {item.cifra.title}
                   </Link>
                   <p className="muted">
-                    {item.cifra.artist} · Tom {item.cifra.key}
+                    {item.cifra.artist} · Tom{' '}
+                    <span className={keyInfo.shifted ? 'playlist-key-live' : undefined}>
+                      {keyInfo.current}
+                    </span>
+                    {keyInfo.shifted ? ` · cifra em ${item.cifra.key}` : ''}
                     {item.cifra.status !== 'PUBLISHED' ? ' · (rascunho)' : ''}
                   </p>
                 </div>
@@ -226,7 +247,8 @@ export function PlaylistManagePage() {
                   </button>
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ol>
         )}
       </section>

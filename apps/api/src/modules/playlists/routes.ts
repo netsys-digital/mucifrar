@@ -1,12 +1,14 @@
 import { Router } from 'express';
 import { authenticate, getAuthUser } from '../../middleware/auth.js';
-import { publicRateLimit } from '../../middleware/rateLimit.js';
+import { playlistLiveRateLimit, publicRateLimit } from '../../middleware/rateLimit.js';
+import { pipePlaylistEvents } from './live.js';
 import * as playlistsService from './service.js';
 import {
   addPlaylistItemSchema,
   createPlaylistSchema,
   reorderPlaylistItemsSchema,
   searchPlaylistsSchema,
+  setPlaylistTomSchema,
   updatePlaylistSchema,
 } from './schemas.js';
 
@@ -17,6 +19,29 @@ publicoPlaylistsRouter.get('/', publicRateLimit, async (req, res, next) => {
     const query = searchPlaylistsSchema.parse(req.query);
     const result = await playlistsService.searchPublic(query.q, query.page, query.pageSize);
     res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+publicoPlaylistsRouter.get('/:slug/eventos', playlistLiveRateLimit, async (req, res, next) => {
+  try {
+    const slug = String(req.params.slug ?? '');
+    const playlistId = await playlistsService.getPublicPlaylistId(slug);
+    pipePlaylistEvents(req, res, playlistId);
+  } catch (err) {
+    next(err);
+  }
+});
+
+publicoPlaylistsRouter.put('/:slug/itens/:itemId/tom', playlistLiveRateLimit, async (req, res, next) => {
+  try {
+    const slug = String(req.params.slug ?? '');
+    const itemId = String(req.params.itemId ?? '');
+    const body = setPlaylistTomSchema.parse(req.body);
+    const playlistId = await playlistsService.getPublicPlaylistId(slug);
+    const event = await playlistsService.setItemSemitones(playlistId, itemId, body.semitones);
+    res.json(event);
   } catch (err) {
     next(err);
   }
@@ -50,6 +75,29 @@ playlistsRouter.post('/', async (req, res, next) => {
     const body = createPlaylistSchema.parse(req.body);
     const playlist = await playlistsService.create(getAuthUser(req).id, body);
     res.status(201).json(playlist);
+  } catch (err) {
+    next(err);
+  }
+});
+
+playlistsRouter.get('/:id/eventos', async (req, res, next) => {
+  try {
+    const id = String(req.params.id ?? '');
+    await playlistsService.assertOwner(getAuthUser(req).id, id);
+    pipePlaylistEvents(req, res, id);
+  } catch (err) {
+    next(err);
+  }
+});
+
+playlistsRouter.put('/:id/itens/:itemId/tom', async (req, res, next) => {
+  try {
+    const id = String(req.params.id ?? '');
+    const itemId = String(req.params.itemId ?? '');
+    const body = setPlaylistTomSchema.parse(req.body);
+    await playlistsService.assertOwner(getAuthUser(req).id, id);
+    const event = await playlistsService.setItemSemitones(id, itemId, body.semitones);
+    res.json(event);
   } catch (err) {
     next(err);
   }

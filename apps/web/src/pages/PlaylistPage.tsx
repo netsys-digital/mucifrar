@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, type Playlist } from '../lib/api';
+import { describePlaylistKey, usePlaylistTomEvents } from '../lib/playlistLive';
 import { useAuth } from '../auth/AuthContext';
 
 export function PlaylistPage() {
@@ -12,6 +13,7 @@ export function PlaylistPage() {
 
   useEffect(() => {
     let cancelled = false;
+    setPlaylist(null);
     setLoading(true);
     setError(null);
     void api<Playlist>(`/api/publico/playlists/${encodeURIComponent(slug)}`)
@@ -28,6 +30,18 @@ export function PlaylistPage() {
       cancelled = true;
     };
   }, [slug]);
+
+  usePlaylistTomEvents(playlist, (event) => {
+    setPlaylist((current) => {
+      if (!current?.items?.some((item) => item.id === event.itemId)) return current;
+      return {
+        ...current,
+        items: current.items.map((item) =>
+          item.id === event.itemId ? { ...item, semitones: event.semitones } : item,
+        ),
+      };
+    });
+  });
 
   if (loading) return <p className="page muted">Carregando playlist…</p>;
   if (error || !playlist) {
@@ -55,6 +69,9 @@ export function PlaylistPage() {
             {playlist.ownerName ? `por ${playlist.ownerName} · ` : ''}
             {items.length} cifra{items.length === 1 ? '' : 's'}
           </p>
+          <p className="muted">
+            O tom de cada música vale só nesta playlist e atualiza na hora para quem estiver aqui.
+          </p>
         </div>
         <div className="mine-actions">
           <Link to="/playlists" className="btn btn-ghost">
@@ -74,7 +91,9 @@ export function PlaylistPage() {
         </div>
       ) : (
         <ol className="playlist-tracklist">
-          {items.map((item, index) => (
+          {items.map((item, index) => {
+            const keyInfo = describePlaylistKey(item.cifra.key, item.semitones);
+            return (
             <li key={item.id} className="playlist-track">
               <span className="playlist-track-num">{index + 1}</span>
               <div className="playlist-track-info">
@@ -85,7 +104,11 @@ export function PlaylistPage() {
                   {item.cifra.title}
                 </Link>
                 <p className="muted">
-                  {item.cifra.artist} · Tom {item.cifra.key}
+                  {item.cifra.artist} · Tom{' '}
+                  <span className={keyInfo.shifted ? 'playlist-key-live' : undefined}>
+                    {keyInfo.current}
+                  </span>
+                  {keyInfo.shifted ? ` · cifra em ${item.cifra.key}` : ''}
                 </p>
               </div>
               <Link
@@ -95,7 +118,8 @@ export function PlaylistPage() {
                 Abrir
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ol>
       )}
     </div>
