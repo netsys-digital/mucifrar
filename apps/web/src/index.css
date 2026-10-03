@@ -1755,6 +1755,11 @@ html.cifra-fs-active body {
   gap: 0.75rem;
 }
 
+.mine-search {
+  margin-bottom: 1.1rem;
+  animation: none;
+}
+
 .mine-row {
   display: flex;
   justify-content: space-between;

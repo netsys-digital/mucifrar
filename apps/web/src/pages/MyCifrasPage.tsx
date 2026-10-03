@@ -1,11 +1,34 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api, type Cifra } from '../lib/api';
+
+function normalize(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
 
 export function MyCifrasPage() {
   const [items, setItems] = useState<Cifra[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const q = searchParams.get('q') ?? '';
+
+  function setQuery(value: string) {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value) next.set('q', value);
+        else next.delete('q');
+        return next;
+      },
+      { replace: true },
+    );
+  }
 
   async function load() {
     setLoading(true);
@@ -30,6 +53,15 @@ export function MyCifrasPage() {
     await load();
   }
 
+  const filtered = useMemo(() => {
+    const terms = normalize(q).split(/\s+/).filter(Boolean);
+    if (terms.length === 0) return items;
+    return items.filter((c) => {
+      const haystack = normalize(`${c.title} ${c.artist}`);
+      return terms.every((t) => haystack.includes(t));
+    });
+  }, [items, q]);
+
   return (
     <div className="page">
       <div className="section-head">
@@ -41,6 +73,21 @@ export function MyCifrasPage() {
           Nova cifra
         </Link>
       </div>
+
+      {items.length > 0 ? (
+        <div className="search-bar mine-search">
+          <label className="sr-only" htmlFor="mine-q">
+            Buscar nas minhas cifras
+          </label>
+          <input
+            id="mine-q"
+            type="search"
+            placeholder="Buscar por título ou artista…"
+            value={q}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+      ) : null}
 
       {loading ? <p className="muted">Carregando…</p> : null}
       {error ? <p className="error-text">{error}</p> : null}
@@ -54,8 +101,17 @@ export function MyCifrasPage() {
         </div>
       ) : null}
 
+      {!loading && items.length > 0 && filtered.length === 0 ? (
+        <div className="empty-state">
+          <p>Nenhuma cifra encontrada para “{q}”.</p>
+          <button type="button" className="btn btn-ghost" onClick={() => setQuery('')}>
+            Limpar busca
+          </button>
+        </div>
+      ) : null}
+
       <div className="mine-list">
-        {items.map((cifra) => (
+        {filtered.map((cifra) => (
           <article key={cifra.id} className="mine-row">
             <div>
               <h3>{cifra.title}</h3>
