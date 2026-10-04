@@ -69,8 +69,14 @@ select {
 
 .shell {
   min-height: 100vh;
+  min-width: 0;
+  max-width: 100%;
   display: grid;
   grid-template-rows: auto 1fr auto;
+}
+
+.shell > * {
+  min-width: 0;
 }
 
 .topbar {
@@ -137,7 +143,106 @@ select {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar-search {
+  flex: 0 1 22rem;
+  min-width: 15rem;
+  max-width: 28rem;
+  margin-left: 0.5rem;
+}
+
+.search-destination {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 2.4rem;
+  border: 1px solid rgba(22, 42, 78, 0.18);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.search-destination:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+
+.search-destination select {
+  flex: 0 0 7.15rem;
+  width: 7.15rem;
+  margin: 0;
+  padding: 0 1.2rem 0 0.55rem;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background-color: #f3f1e8;
+  background-image: linear-gradient(45deg, transparent 50%, var(--navy) 50%),
+    linear-gradient(135deg, var(--navy) 50%, transparent 50%);
+  background-position: calc(100% - 0.55rem) 55%, calc(100% - 0.32rem) 55%;
+  background-size: 0.26rem 0.26rem, 0.26rem 0.26rem;
+  background-repeat: no-repeat;
+  -webkit-appearance: none;
+  appearance: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--navy);
+  cursor: pointer;
+  outline: none;
+}
+
+.search-destination input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0 0.35rem 0 0.7rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  outline: none;
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.search-destination input::placeholder {
+  color: #8b97a8;
+}
+
+.search-destination input::-webkit-search-cancel-button,
+.search-destination input::-webkit-search-decoration {
+  appearance: none;
+}
+
+.search-destination-go {
+  flex: 0 0 2.15rem;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  cursor: pointer;
+}
+
+.search-destination-go:hover {
+  color: var(--gold-deep);
+}
+
+.brand,
+.topbar-actions {
+  flex-shrink: 0;
 }
 
 .nav-link {
@@ -147,6 +252,7 @@ select {
   color: var(--ink-soft);
   font-weight: 600;
   font-size: 0.95rem;
+  white-space: nowrap;
   transition: color 0.2s ease;
 }
 
@@ -1261,25 +1367,6 @@ button.portal-shortcut {
   margin-bottom: 0;
 }
 
-.cifra-chord-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.cifra-chord-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.28rem 0.55rem;
-  border-radius: 999px;
-  background: rgba(234, 88, 12, 0.1);
-  color: var(--chord);
-  font-family: var(--font-mono);
-  font-size: 0.82rem;
-  font-weight: 700;
-  border: 1px solid rgba(234, 88, 12, 0.22);
-}
-
 .cifra-scroll-bar {
   display: flex;
   flex-wrap: wrap;
@@ -1385,12 +1472,6 @@ button.portal-shortcut {
 
 .cifra-stage--dark .cifra-section {
   color: var(--sheet-section);
-}
-
-.cifra-stage--dark .cifra-chord-chip {
-  background: rgba(14, 20, 28, 0.55);
-  color: var(--sheet-chord);
-  border-color: rgba(251, 146, 60, 0.28);
 }
 
 .cifra-stage--dark .cifra-col-picker {
@@ -1505,8 +1586,7 @@ html.cifra-fs-active body {
   .footer,
   .print-hide,
   .cifra-toolbar,
-  .cifra-scroll-bar,
-  .cifra-chord-list {
+  .cifra-scroll-bar {
     display: none !important;
   }
 
@@ -1649,29 +1729,17 @@ html.cifra-fs-active body {
 }
 
 .enviar-search {
-  display: grid;
-  gap: 0.6rem;
+  margin-top: 0.75rem;
 }
 
-.enviar-search input {
-  width: 100%;
-  padding: 0.6rem 0.85rem;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fff;
-  font: inherit;
-  color: var(--ink);
+.enviar-search .search-destination {
+  height: 2.7rem;
 }
 
-.enviar-search input:focus {
-  outline: 2px solid var(--gold-soft);
-  border-color: var(--gold);
-}
-
-.enviar-search-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+@media (min-width: 821px) {
+  .enviar-search {
+    display: none;
+  }
 }
 
 .enviar-import-card--side {
@@ -1801,14 +1869,35 @@ html.cifra-fs-active body {
   color: var(--ink-soft);
 }
 
+@media (max-width: 1280px) {
+  .topbar {
+    gap: 0.75rem;
+  }
+
+  .nav-link {
+    padding: 0.45rem 0.4rem;
+    font-size: 0.88rem;
+  }
+
+  .nav-link::after {
+    left: 0.4rem;
+    right: 0.4rem;
+  }
+}
+
 @media (max-width: 820px) {
   .topbar {
     flex-wrap: wrap;
   }
 
+  .topbar-search {
+    display: none;
+  }
+
   .nav {
     order: 3;
     width: 100%;
+    min-width: 0;
     overflow-x: auto;
   }
 
@@ -1921,10 +2010,6 @@ html.cifra-fs-active body {
     top: 0.35rem;
   }
 
-  .cifra-chord-list {
-    display: none;
-  }
-
   .cifra-toolbar-primary {
     gap: 0.4rem 0.5rem;
   }
@@ -1996,6 +2081,28 @@ html.cifra-fs-active body {
     top: 3.4rem;
   }
 
+  .cifra-toolbar .cifra-toolbar-font,
+  .cifra-toolbar .cifra-toolbar-scroll {
+    display: none;
+  }
+
+  .cifra-mobile-bar {
+    justify-content: flex-start;
+    gap: 0.3rem;
+    flex-wrap: nowrap;
+  }
+
+  .cifra-mobile-bar-actions {
+    margin-left: auto;
+  }
+
+  .cifra-mobile-bar .cifra-toolbar-group {
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+    gap: 0.15rem;
+    padding: 0.15rem 0.2rem;
+  }
+
   .cifra-view-head {
     margin-bottom: 0.6rem;
   }
@@ -2008,6 +2115,61 @@ html.cifra-fs-active body {
 
   .footer-cols {
     grid-template-columns: 1fr;
+  }
+
+  .topbar {
+    padding-inline: 0.75rem;
+  }
+
+  .brand,
+  .topbar-actions {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .user-chip {
+    max-width: 6.5rem;
+  }
+
+  .cifra-mobile-bar {
+    gap: 0.2rem;
+    padding: 0.25rem 0.3rem;
+  }
+
+  .cifra-mobile-bar .btn-compact {
+    min-width: 1.75rem;
+    padding: 0.3rem 0.35rem;
+    font-size: 0.8rem;
+  }
+
+  .cifra-mobile-bar .btn-icon {
+    min-width: 1.9rem;
+    padding-inline: 0.3rem;
+  }
+
+  .cifra-mobile-bar-key {
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .cifra-mobile-scroll .cifra-toolbar-label {
+    display: none;
+  }
+
+  .cifra-mobile-bar-actions {
+    gap: 0.2rem;
+  }
+
+  .cifra-sheet {
+    padding: 1rem 0.7rem;
+  }
+
+  .cifra-sheet-col,
+  .cifra-block,
+  .cifra-line {
+    max-width: 100%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -2028,6 +2190,96 @@ html.cifra-fs-active body {
   .cifra-stage--fullscreen .cifra-sheet--grid-4 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+}
+
+/* iPad em pé: o menu aberto só mostra o que a barra de cima não tem.
+   Abaixo de 744px o celular mantém o menu original. */
+@media (min-width: 744px) {
+  .cifra-stage--tablet-portrait .cifra-toolbar-font,
+  .cifra-stage--tablet-portrait .cifra-toolbar-scroll,
+  .cifra-stage--tablet-portrait .cifra-toolbar-more-toggle,
+  .cifra-stage--tablet-portrait .cifra-toolbar-columns,
+  .cifra-stage--tablet-portrait .cifra-toolbar-more .cifra-fs-btn {
+    display: none;
+  }
+
+  .cifra-view--panel-open .cifra-stage--tablet-portrait .cifra-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .cifra-view--panel-open .cifra-stage--tablet-portrait .cifra-toolbar-primary,
+  .cifra-view--panel-open .cifra-stage--tablet-portrait .cifra-toolbar-more {
+    display: contents;
+  }
+}
+
+.cifra-stage--tablet-portrait .cifra-sheet--grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cifra-stage--tablet-portrait .cifra-sheet--grid-2 .cifra-sheet-col:not(:last-child) {
+  padding-right: 1rem;
+  border-right: 1px solid rgba(15, 28, 46, 0.08);
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.cifra-stage--dark.cifra-stage--tablet-portrait .cifra-sheet--grid-2 .cifra-sheet-col:not(:last-child) {
+  border-right-color: rgba(255, 255, 255, 0.1);
+}
+
+.cifra-stage--tablet-landscape .cifra-sheet--grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cifra-stage--tablet-landscape .cifra-sheet--grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cifra-stage--tablet-portrait .cifra-mobile-bar {
+  justify-content: flex-start;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+}
+
+.cifra-stage--tablet-portrait .cifra-mobile-bar .cifra-toolbar-group {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.cifra-stage--tablet-portrait .cifra-mobile-bar-actions {
+  margin-left: auto;
+}
+
+.cifra-mobile-scroll {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
+.cifra-mobile-speed {
+  min-width: 1.35rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.cifra-stage--dark .cifra-mobile-speed {
+  color: var(--sheet-ink);
+}
+
+.cifra-mobile-bar .cifra-col-picker {
+  flex-shrink: 0;
+}
+
+.cifra-mobile-bar .cifra-col-picker .btn-compact {
+  min-width: 1.85rem;
+  padding: 0.28rem 0.42rem;
 }
 
 .cifra-view-actions {

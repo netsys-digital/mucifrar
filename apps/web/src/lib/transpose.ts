@@ -367,24 +367,6 @@ export function distributeBlocksToColumns(blocks: string[][], columnCount: numbe
   return distributeLinesToColumns(content, columnCount).map((col) => splitCifraBlocks(col.join('\n')));
 }
 
-export function listUniqueChords(content: string): string[] {
-  const seen = new Set<string>();
-  const order: string[] = [];
-  for (const line of content.split('\n')) {
-    if (!isChordHeavyLine(line)) continue;
-    const re = new RegExp(CHORD_TOKEN.source, 'g');
-    let match: RegExpExecArray | null;
-    while ((match = re.exec(line)) !== null) {
-      const chord = match[0];
-      if (!seen.has(chord)) {
-        seen.add(chord);
-        order.push(chord);
-      }
-    }
-  }
-  return order;
-}
-
 export function rootOfKey(key: string): string | null {
   const match = /^([A-G](?:#|b)?)/.exec(key.trim());
   return match?.[1] ?? null;

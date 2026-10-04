@@ -24,7 +24,6 @@ import {
 } from '../lib/cifraPrefs';
 import {
   formatTransposeLabel,
-  listUniqueChords,
   normalizeSemitones,
   semitonesBetweenKeys,
   splitCifraBlocks,
@@ -33,6 +32,45 @@ import {
   transposeContent,
   transposeKey,
 } from '../lib/transpose';
+
+function isIpadDevice(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  if (/iPad/.test(navigator.userAgent)) return true;
+  // iPadOS 13+ se identifica como Mac, mas aceita toque.
+  return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+}
+
+function isTabletDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (isIpadDevice()) return true;
+  return window.matchMedia('(pointer: coarse)').matches;
+}
+
+/** iPad em pé: até 2 colunas. Deitado: até 4. Telefone fica de fora. */
+function detectTabletLayout(): 'portrait' | 'landscape' | null {
+  if (!isTabletDevice()) return null;
+  const portrait = window.matchMedia('(orientation: portrait)').matches;
+  if (portrait && window.matchMedia('(min-width: 744px)').matches) return 'portrait';
+  if (!portrait && window.matchMedia('(min-width: 1024px) and (min-height: 744px)').matches) {
+    return 'landscape';
+  }
+  return null;
+}
+
+function useTabletLayout(): 'portrait' | 'landscape' | null {
+  const [layout, setLayout] = useState(detectTabletLayout);
+  useEffect(() => {
+    const update = () => setLayout(detectTabletLayout());
+    const portrait = window.matchMedia('(orientation: portrait)');
+    portrait.addEventListener('change', update);
+    window.addEventListener('resize', update);
+    return () => {
+      portrait.removeEventListener('change', update);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+  return layout;
+}
 
 function ToolIcon({ d }: { d: string }) {
   return (
@@ -181,8 +219,10 @@ export function CifraPage() {
     if (inPlaylist) setVersionLoaded(false);
   }
 
-  const maxColumns: ColumnCount = fullscreen ? 4 : 2;
-  const columnOptions = (fullscreen ? [1, 2, 3, 4] : [1, 2]) as ColumnCount[];
+  const tabletLayout = useTabletLayout();
+  const maxColumns: ColumnCount =
+    tabletLayout === 'landscape' ? 4 : tabletLayout === 'portrait' ? 2 : fullscreen ? 4 : 2;
+  const columnOptions = ([1, 2, 3, 4] as ColumnCount[]).slice(0, maxColumns);
 
   useEffect(() => {
     let cancelled = false;
@@ -607,8 +647,6 @@ export function CifraPage() {
     [cifra, semitones],
   );
 
-  const uniqueChords = useMemo(() => listUniqueChords(displayContent), [displayContent]);
-
   const playlistNav = useMemo(() => {
     const items = (playlistCtx?.items ?? []).filter(
       (i) => i.cifra.status === 'PUBLISHED' || i.cifra.slug === slug,
@@ -699,12 +737,14 @@ export function CifraPage() {
     'cifra-stage',
     fullscreen ? 'cifra-stage--fullscreen' : '',
     darkSheet ? 'cifra-stage--dark' : '',
+    tabletLayout === 'portrait' ? 'cifra-stage--tablet-portrait' : '',
+    tabletLayout === 'landscape' ? 'cifra-stage--tablet-landscape' : '',
     columnCount > 1 ? `cifra-stage--cols-${columnCount}` : '',
   ]
     .filter(Boolean)
     .join(' ');
 
-  const fontSize = `${(0.98 * fontScale).toFixed(3)}rem`;
+  const fontSize = `${(0.98 * fontScale).toFixed(4)}rem`;
 
   return (
     <article className={`page cifra-view${mobilePanelOpen ? ' cifra-view--panel-open' : ''}`}>
@@ -809,6 +849,69 @@ export function CifraPage() {
           <span className="cifra-mobile-bar-key">
             Tom <strong>{displayKey}</strong>
           </span>
+          {tabletLayout !== 'landscape' ? (
+            <>
+              <div className="cifra-toolbar-group cifra-mobile-font">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-compact"
+                  aria-label="Diminuir texto"
+                  title="Diminuir texto"
+                  onClick={() => bumpFont(-0.05)}
+                >
+                  A−
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-compact"
+                  aria-label="Aumentar texto"
+                  title="Aumentar texto"
+                  onClick={() => bumpFont(0.05)}
+                >
+                  A+
+                </button>
+              </div>
+              {tabletLayout === 'portrait' ? (
+                <div className="cifra-col-picker" role="group" aria-label="Número de colunas">
+                  {columnOptions.map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`btn btn-ghost btn-compact${columnCount === n ? ' is-active' : ''}`}
+                      aria-pressed={columnCount === n}
+                      onClick={() => setColumnCount(clampColumns(n, maxColumns))}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <div className="cifra-toolbar-group cifra-mobile-scroll">
+                <span className="cifra-toolbar-label">Vel.</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-compact"
+                  aria-label="Diminuir velocidade do scroll"
+                  disabled={scrollSpeed <= 1}
+                  onClick={() => setScrollSpeed((s) => clampSpeed(s - 1))}
+                >
+                  −
+                </button>
+                <span className="cifra-mobile-speed" title="Velocidade do scroll">
+                  {scrollSpeed}
+                </span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-compact"
+                  aria-label="Aumentar velocidade do scroll"
+                  disabled={scrollSpeed >= 60}
+                  onClick={() => setScrollSpeed((s) => clampSpeed(s + 1))}
+                >
+                  +
+                </button>
+              </div>
+            </>
+          ) : null}
           <div className="cifra-mobile-bar-actions">
           <button
             type="button"
@@ -892,7 +995,7 @@ export function CifraPage() {
               ) : null}
             </div>
 
-            <div className="cifra-toolbar-group">
+            <div className="cifra-toolbar-group cifra-toolbar-font">
               <button
                 type="button"
                 className="btn btn-ghost btn-compact"
@@ -984,7 +1087,7 @@ export function CifraPage() {
               </button>
             </div>
 
-            <div className="cifra-toolbar-group">
+            <div className="cifra-toolbar-group cifra-toolbar-columns">
               <span className="cifra-toolbar-label">Colunas</span>
               <div className="cifra-col-picker" role="group" aria-label="Número de colunas">
                 {columnOptions.map((n) => (
@@ -1075,16 +1178,6 @@ export function CifraPage() {
           <p className="ok-text print-hide">{shareNote ?? saveNote}</p>
         )}
         {tomSyncError ? <p className="error-text print-hide">{tomSyncError}</p> : null}
-
-        {uniqueChords.length > 0 ? (
-          <div className="cifra-chord-list print-hide" aria-label="Acordes usados">
-            {uniqueChords.map((chord) => (
-              <span key={chord} className="cifra-chord-chip">
-                {chord}
-              </span>
-            ))}
-          </div>
-        ) : null}
 
         <div
           ref={sheetRef}

@@ -2,6 +2,11 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, type Cifra } from '../lib/api';
 import { consumePendingImport, clearPendingImport } from '../lib/importPayload';
+import {
+  resolveSearch,
+  SearchDestinationField,
+  type SearchTarget,
+} from '../components/SearchDestinationField';
 
 const EMPTY = {
   title: '',
@@ -10,21 +15,6 @@ const EMPTY = {
   content: '',
   status: 'DRAFT' as 'DRAFT' | 'PUBLISHED',
 };
-
-const CIFRA_SITES = [
-  {
-    name: 'Cifra Club',
-    home: 'https://www.cifraclub.com.br/',
-    search: (q: string) => `https://www.cifraclub.com.br/?q=${encodeURIComponent(q)}`,
-    primary: true,
-  },
-  {
-    name: 'Cifras.com.br',
-    home: 'https://www.cifras.com.br/',
-    search: (q: string) => `https://www.cifras.com.br/busca?q=${encodeURIComponent(q)}`,
-    primary: false,
-  },
-];
 
 export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const { id = '' } = useParams();
@@ -44,6 +34,7 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [siteQuery, setSiteQuery] = useState('');
+  const [siteTarget, setSiteTarget] = useState<SearchTarget>('cifraclub');
   const [loading, setLoading] = useState(mode === 'edit');
   const [importNote] = useState<string | null>(() =>
     mode === 'create' && Boolean(consumePendingImport()?.content)
@@ -123,30 +114,25 @@ export function CifraFormPage({ mode }: { mode: 'create' | 'edit' }) {
               Busque a música em um dos sites, use o favorito{' '}
               <strong>Capturar p/ Chord Seven</strong> e volte aqui com a cifra preenchida.
             </p>
-            <form className="enviar-search" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="search"
-                placeholder="Nome da música ou artista"
-                value={siteQuery}
-                onChange={(e) => setSiteQuery(e.target.value)}
-                aria-label="Buscar música nos sites de cifra"
-              />
-              <div className="enviar-search-actions">
-                {CIFRA_SITES.map((site) => (
-                  <button
-                    key={site.name}
-                    type="submit"
-                    className={site.primary ? 'btn btn-gold' : 'btn btn-ghost'}
-                    onClick={() => {
-                      const q = siteQuery.trim();
-                      window.location.href = q ? site.search(q) : site.home;
-                    }}
-                  >
-                    {siteQuery.trim() ? `Buscar no ${site.name}` : `Abrir ${site.name}`}
-                  </button>
-                ))}
-              </div>
-            </form>
+            <SearchDestinationField
+              id="enviar-search-q"
+              className="enviar-search"
+              query={siteQuery}
+              onQueryChange={setSiteQuery}
+              target={siteTarget}
+              onTargetChange={setSiteTarget}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const result = resolveSearch(siteTarget, siteQuery);
+                if (result.kind === 'external') {
+                  window.location.assign(result.url);
+                  return;
+                }
+                const next = new URLSearchParams();
+                if (result.q) next.set('q', result.q);
+                navigate({ pathname: '/', search: next.toString() ? `?${next}` : '' });
+              }}
+            />
             {importNote ? <p className="ok-text">{importNote}</p> : null}
           </div>
 

@@ -1,6 +1,53 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { type FormEvent, useEffect, useState } from 'react';
+import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { GlobalLoader, useGlobalLoading } from './GlobalLoader';
+import {
+  resolveSearch,
+  SearchDestinationField,
+  type SearchTarget,
+} from './SearchDestinationField';
+
+function TopbarSearch() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [params] = useSearchParams();
+  const urlQuery = location.pathname === '/' ? (params.get('q') ?? '') : null;
+  const [q, setQ] = useState(urlQuery ?? '');
+  const [target, setTarget] = useState<SearchTarget>('interna');
+
+  useEffect(() => {
+    if (urlQuery !== null) setQ(urlQuery);
+  }, [urlQuery]);
+
+  function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const result = resolveSearch(target, q);
+    if (result.kind === 'external') {
+      window.location.assign(result.url);
+      return;
+    }
+    const next = new URLSearchParams();
+    if (result.q) next.set('q', result.q);
+    if (location.pathname === '/' && params.get('sort') === 'recent') {
+      next.set('sort', 'recent');
+    }
+    const search = next.toString();
+    navigate({ pathname: '/', search: search ? `?${search}` : '' });
+  }
+
+  return (
+    <SearchDestinationField
+      id="topbar-search-q"
+      className="topbar-search"
+      query={q}
+      onQueryChange={setQ}
+      target={target}
+      onTargetChange={setTarget}
+      onSubmit={onSubmit}
+    />
+  );
+}
 
 export function AppShell() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -43,6 +90,8 @@ export function AppShell() {
             </>
           ) : null}
         </nav>
+
+        <TopbarSearch />
 
         <div className="topbar-actions">
           {isAuthenticated ? (

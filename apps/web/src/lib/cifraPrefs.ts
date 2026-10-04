@@ -23,8 +23,12 @@ const DEFAULT_VIEW: CifraViewPrefs = {
   scrollSpeed: 16,
 };
 
+/** Base da cifra na escala 1: 0.98rem. Com raiz de 16px, o piso 5px equivale a esta escala. */
+const FONT_SCALE_MIN = 5 / (0.98 * 16);
+
 function clampFontScale(n: number): number {
-  return Math.min(1.8, Math.max(0.7, Math.round(n * 20) / 20));
+  const stepped = Math.round(n * 20) / 20;
+  return Math.min(1.8, Math.max(FONT_SCALE_MIN, stepped));
 }
 
 function clampSpeed(n: number): number {
